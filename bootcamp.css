@@ -57,8 +57,7 @@ p  { margin: 0 0 1em; }
   color: var(--blue-darker);
   font-weight: 700;
   font-size: 1.1rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   text-decoration: none;
   padding: 18px 40px;
   border-radius: 999px;
@@ -307,7 +306,7 @@ p  { margin: 0 0 1em; }
     background: var(--blue-darker); padding: 10px 16px;
   }
   .mobile-cta .cta { display: block; text-align: center; padding: 14px; font-size: 1rem; }
-  .cta { letter-spacing: 0.02em; padding-left: 24px; padding-right: 24px; }
+  .cta { letter-spacing: 0; padding-left: 24px; padding-right: 24px; }
   .mobile-cta .cta { font-size: 0.95rem; padding: 14px 10px; }
 }
 
