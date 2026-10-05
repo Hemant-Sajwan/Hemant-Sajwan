@@ -224,7 +224,13 @@ p  { margin: 0 0 1em; }
 .faq .answer a { color: var(--blue); font-weight: 600; }
 
 /* ---------- footer ---------- */
-.footer { background: var(--blue-darker); color: rgba(255, 255, 255, 0.65); text-align: center; padding: 28px 0 96px; font-size: 0.85rem; }
+.footer { background: var(--blue-darker); color: rgba(255, 255, 255, 0.65); text-align: center; padding: 40px 0 96px; font-size: 0.85rem; }
+.footer p { margin: 0 0 0.4em; }
+.footer .disclaimer { max-width: 720px; margin: 0 auto 1.4em; font-size: 0.8rem; line-height: 1.6; opacity: 0.85; }
+.footer-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 12px; margin-top: 1.6em; }
+.footer-links a { color: var(--white); text-decoration: none; font-weight: 500; }
+.footer-links a:hover { color: var(--gold); text-decoration: underline; }
+.footer-links span { opacity: 0.4; }
 
 /* ---------- mobile sticky button ---------- */
 .mobile-cta { display: none; }
