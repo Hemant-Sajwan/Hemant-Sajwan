@@ -200,6 +200,29 @@ p  { margin: 0 0 1em; }
 .get-wide h3 { color: var(--gold); }
 .get-wide p { color: rgba(255, 255, 255, 0.92); }
 
+/* ---------- FAQ ---------- */
+.faq { margin-top: 2em; }
+.faq details {
+  background: var(--white); border: 1px solid var(--line); border-radius: var(--radius);
+  margin-bottom: 12px; overflow: hidden;
+}
+.faq details[open] { border-color: var(--blue); box-shadow: var(--shadow); }
+.faq summary {
+  cursor: pointer; list-style: none; position: relative;
+  padding: 18px 56px 18px 22px; font-weight: 600; color: var(--blue-darker);
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after {
+  content: "+"; position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--blue-darker);
+  display: grid; place-items: center; font-size: 1.2rem; font-weight: 700; line-height: 1;
+}
+.faq details[open] summary::after { content: "–"; }
+.faq .answer { padding: 0 22px 18px; color: var(--ink-soft); }
+.faq .answer p { margin-bottom: 0.7em; }
+.faq .answer p:last-child { margin-bottom: 0; }
+.faq .answer a { color: var(--blue); font-weight: 600; }
+
 /* ---------- footer ---------- */
 .footer { background: var(--blue-darker); color: rgba(255, 255, 255, 0.65); text-align: center; padding: 28px 0 96px; font-size: 0.85rem; }
 
