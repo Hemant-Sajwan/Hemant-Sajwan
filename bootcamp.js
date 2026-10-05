@@ -11,6 +11,18 @@
   });
 })();
 
+// Fill in the bootcamp dates, time(s) and mode from window.BOOTCAMP (set at the top of each page)
+(function () {
+  var info = window.BOOTCAMP;
+  if (!info) return;
+  document.querySelectorAll("[data-bootcamp]").forEach(function (el) {
+    var value = info[el.getAttribute("data-bootcamp")];
+    if (value == null) return;
+    if (Array.isArray(value)) value = value.join(el.getAttribute("data-join") || "\n");
+    el.textContent = value;
+  });
+})();
+
 // Keep the copyright year current
 var year = document.getElementById("year");
 if (year) year.textContent = new Date().getFullYear();
