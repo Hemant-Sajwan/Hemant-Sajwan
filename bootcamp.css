@@ -317,3 +317,4 @@ p  { margin: 0 0 1em; }
 @media (max-width: 380px) {
   .mobile-cta .cta { font-size: 0.82rem; letter-spacing: 0; }
 }
+.nowrap { white-space: nowrap; } /* keeps a phrase together if the line has to wrap */
