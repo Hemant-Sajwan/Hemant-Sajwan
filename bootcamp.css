@@ -68,6 +68,7 @@ p  { margin: 0 0 1em; }
 .cta s { opacity: 0.6; font-weight: 600; text-decoration-thickness: 2px; margin: 0 0.1em; } /* crossed-out old price */
 .cta .price { white-space: nowrap; } /* keeps "INR 2999 97" on one line */
 .cta-meta  { margin-top: 16px; font-size: 0.95rem; opacity: 0.85; }
+.cta-guarantee { display: block; margin-top: 4px; font-size: 0.85rem; font-weight: 600; } /* refund line on the paid page */
 
 /* ---------- top bar ---------- */
 .topbar { background: var(--blue-darker); color: var(--white); position: sticky; top: 0; z-index: 20; }
@@ -301,6 +302,8 @@ p  { margin: 0 0 1em; }
   .format { grid-template-columns: 1fr; }
   .callout, .punch { padding: 26px 22px; }
   .topbar .cta { display: none; }
+  .cta-meta { font-size: 0.82rem; }
+  .cta-guarantee { font-size: 0.78rem; }
   .mobile-cta {
     display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
     background: var(--blue-darker); padding: 10px 16px;
