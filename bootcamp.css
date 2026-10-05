@@ -310,3 +310,8 @@ p  { margin: 0 0 1em; }
   .cta { letter-spacing: 0.02em; padding-left: 24px; padding-right: 24px; }
   .mobile-cta .cta { font-size: 0.95rem; padding: 14px 10px; }
 }
+
+/* very narrow phones: keep the sticky button on one line */
+@media (max-width: 380px) {
+  .mobile-cta .cta { font-size: 0.82rem; letter-spacing: 0; }
+}
