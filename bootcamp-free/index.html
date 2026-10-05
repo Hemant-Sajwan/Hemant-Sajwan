@@ -216,17 +216,33 @@
 </section>
 
 <!-- ===== WHAT OTHERS ARE SAYING =====
-     Screenshots to come. When you have them, put the image files in an
-     "images" folder and replace each placeholder <div> with:
-     <img src="../images/your-file-name.png" alt="Review from a past participant" loading="lazy" />
+     Testimonial carousel. Each <li> is one slide, shown in this order.
+     To add one: copy an <li> block, change the image number and the alt text.
+     The dots and the "1 / 5" counter update automatically.
 -->
-<section class="section on-light">
+<section class="section on-light" id="testimonials">
   <div class="container">
     <h2 class="center">What Others Are Saying</h2>
-    <div class="shots">
-      <div class="shot-placeholder">Screenshot coming soon</div>
-      <div class="shot-placeholder">Screenshot coming soon</div>
-      <div class="shot-placeholder">Screenshot coming soon</div>
+
+    <div class="carousel" data-carousel>
+      <button class="carousel-btn prev" type="button" aria-label="Previous testimonial">&#8249;</button>
+      <ul class="carousel-track">
+        <li class="slide"><img src="../images/testimonials/01.webp" width="1242" height="549" loading="lazy"
+          alt="Senior Test Analyst: It was sheer curiosity that led me to sign up for this workshop, but the CISSP Domain 1 Bootcamp turned out to be far more insightful than I had anticipated. Hemant's teaching style is concise and to the point. The mind maps, in particular, were incredibly helpful. I would highly recommend this CISSP Accelerator program to anyone looking for structured guidance and a strong starting point in their CISSP journey." /></li>
+        <li class="slide"><img src="../images/testimonials/02.webp" width="1252" height="766" loading="lazy"
+          alt="Feedback form: It was explained in detail, each terminology was explained; with your presentation even a lengthy course seemed manageable and doable. You take time to answer everyone's questions. I am getting much clarity about doing CISSP." /></li>
+        <li class="slide"><img src="../images/testimonials/03.webp" width="1242" height="727" loading="lazy"
+          alt="Feedback form: It was clear and to the point. The explanation was concise and easy to understand. Within just 30 minutes of the first session, I was already grasping the topics and answering questions with ease. I feel more confident about taking the CISSP." /></li>
+        <li class="slide"><img src="../images/testimonials/04.webp" width="1255" height="688" loading="lazy"
+          alt="Feedback form: You broke module 1 into easily consumable shorter definitions, easy to remember and refer to. When doing the quiz it felt like I got the grip on the module. More confident." /></li>
+        <li class="slide"><img src="../images/testimonials/05.webp" width="1240" height="226" loading="lazy"
+          alt="Feedback form: Hit straight to the point and focused on important issues." /></li>
+      </ul>
+      <button class="carousel-btn next" type="button" aria-label="Next testimonial">&#8250;</button>
+      <div class="carousel-foot">
+        <div class="carousel-dots" role="tablist" aria-label="Choose a testimonial"></div>
+        <span class="carousel-count" aria-live="polite"></span>
+      </div>
     </div>
   </div>
 </section>
