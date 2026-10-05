@@ -381,3 +381,31 @@ p  { margin: 0 0 1em; }
   .sticky-bar .cta { font-size: 0.82rem; letter-spacing: 0; }
 }
 .nowrap { white-space: nowrap; } /* keeps a phrase together if the line has to wrap */
+
+/* =========================================================
+   Legal & contact pages (privacy, terms, refund, contact)
+   ========================================================= */
+.back-link { color: var(--white); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+.back-link:hover { color: var(--gold); }
+.legal { padding: 56px 0 72px; background: var(--white); }
+.legal h1 {
+  font-size: clamp(2rem, 5vw, 2.8rem); color: var(--blue-darker); margin-bottom: 0.6em;
+  padding-bottom: 0.4em; border-bottom: 4px solid var(--gold); display: inline-block;
+}
+.legal h2 { font-size: 1.3rem; color: var(--blue); margin: 2em 0 0.6em; }
+.legal h3 { font-size: 1.05rem; color: var(--blue-darker); margin: 1.6em 0 0.5em; }
+.legal p, .legal li { color: var(--ink-soft); font-size: 1rem; line-height: 1.75; }
+.legal ul { padding-left: 1.3em; margin: 0 0 1.2em; }
+.legal li { margin-bottom: 0.4em; }
+.legal a { color: var(--blue); font-weight: 600; word-break: break-word; }
+.legal-intro { font-size: 1.15rem !important; color: var(--ink) !important; }
+.contact-box, .guarantee-box, .contact-card {
+  background: var(--light); border-left: 5px solid var(--gold); border-radius: var(--radius);
+  padding: 20px 24px; margin: 1em 0 1.4em;
+}
+.contact-box p, .guarantee-box p { margin: 0 0 0.4em; }
+.contact-box p:last-child, .guarantee-box p:last-child { margin-bottom: 0; }
+.guarantee-title { font-weight: 700; color: var(--blue-darker) !important; font-size: 1.1rem !important; }
+.contact-card { text-align: center; padding: 32px 24px; }
+.contact-card .cta { color: var(--blue-darker); margin-top: 8px; word-break: break-all; }
+.footer-plain { padding-bottom: 40px; }
