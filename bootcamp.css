@@ -289,6 +289,9 @@ p  { margin: 0 0 1em; }
   .carousel { padding: 0; }
   .carousel-btn { width: 38px; height: 38px; font-size: 1.6rem; top: auto; bottom: -6px; transform: none; }
   .slide { min-height: 0; padding: 4px; }
+  .carousel-dots { gap: 5px; flex-wrap: nowrap; }
+  .carousel-dots button { width: 7px; height: 7px; }
+  .carousel-dots button[aria-selected="true"] { width: 18px; }
   .mentor-grid { grid-template-columns: 1fr; gap: 28px; }
   .mentor-photo { position: static; max-width: 420px; margin: 0 auto; }
   .format { grid-template-columns: 1fr; }
