@@ -3,7 +3,13 @@
 // Registration pop-up: every "Register Now" button opens the form
 (function () {
   var modal = document.getElementById("register-form");
-  if (!modal) return;
+  if (!modal) {
+    // pages without the pop-up (the paid page): buttons go straight to the payment link
+    if (window.PAYMENT_URL) {
+      document.querySelectorAll("[data-register]").forEach(function (el) { el.href = window.PAYMENT_URL; });
+    }
+    return;
+  }
   var form = modal.querySelector("form");
   var status = modal.querySelector(".reg-status");
   var submit = modal.querySelector(".reg-submit");

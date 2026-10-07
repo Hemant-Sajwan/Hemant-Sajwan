@@ -30,16 +30,11 @@
 
 <!--
   ================================================================
-  ONE-TIME SETTINGS: where registrations from the pop-up form go
-  ----------------------------------------------------------------
-  FORM_ENDPOINT: the web address that receives the form entries
-  (e.g. a Google Sheet script or Formspree link). While it is empty
-  the form runs in TEST MODE and nothing is saved.
+  PAYMENT LINK: every "Register Now" button on this page goes here
   ================================================================
 -->
 <script>
-  window.FORM_ENDPOINT = "";
-  window.PAYMENT_URL   = "https://pages.razorpay.com/cisspaccelerator";   // Razorpay payment page. People go here after the form.
+  window.PAYMENT_URL = "https://pages.razorpay.com/cisspaccelerator";
 </script>
 </head>
 <body>
@@ -48,7 +43,7 @@
 <nav class="topbar">
   <div class="container">
     <a class="brand" href="#">CISSP <span>Accelerator</span></a>
-    <a class="cta" data-register href="#">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
+    <a class="cta" data-register href="https://pages.razorpay.com/cisspaccelerator">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
   </div>
 </nav>
 
@@ -88,7 +83,7 @@
       </div>
     </div>
 
-    <a class="cta" data-register href="#">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
+    <a class="cta" data-register href="https://pages.razorpay.com/cisspaccelerator">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
     <p class="cta-meta">2 sessions • 2 hours each day • CISSP Domain 1<span class="cta-guarantee"><span class="nowrap">✓ 100% Risk-Free:</span> <span class="nowrap">Full Refund if Not Satisfied</span></span></p>
   </div>
 </header>
@@ -257,7 +252,7 @@
     <p>Just 2 focused sessions to help you get started with the right structure.</p>
 
     <div class="center" style="margin-top:2.4em">
-      <a class="cta" data-register href="#">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
+      <a class="cta" data-register href="https://pages.razorpay.com/cisspaccelerator">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
       <p class="cta-meta">2 sessions • 2 hours each day • CISSP Domain 1<span class="cta-guarantee"><span class="nowrap">✓ 100% Risk-Free:</span> <span class="nowrap">Full Refund if Not Satisfied</span></span></p>
     </div>
   </div>
@@ -423,7 +418,7 @@
     </div>
 
     <div class="center" style="margin-top:3em">
-      <a class="cta" data-register href="#">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
+      <a class="cta" data-register href="https://pages.razorpay.com/cisspaccelerator">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
       <p class="cta-meta">2 sessions • 2 hours each day • CISSP Domain 1<span class="cta-guarantee"><span class="nowrap">✓ 100% Risk-Free:</span> <span class="nowrap">Full Refund if Not Satisfied</span></span></p>
     </div>
   </div>
@@ -520,7 +515,7 @@
     </div>
 
     <div class="center" style="margin-top:3em">
-      <a class="cta" data-register href="#">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
+      <a class="cta" data-register href="https://pages.razorpay.com/cisspaccelerator">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
       <p class="cta-meta">2 sessions • 2 hours each day • CISSP Domain 1<span class="cta-guarantee"><span class="nowrap">✓ 100% Risk-Free:</span> <span class="nowrap">Full Refund if Not Satisfied</span></span></p>
     </div>
   </div>
@@ -545,69 +540,6 @@
   </div>
 </footer>
 
-<!-- ===== REGISTRATION POP-UP (opens from every "Register Now" button) ===== -->
-<dialog class="reg-modal" id="register-form" aria-labelledby="reg-title">
-  <button class="reg-close" type="button" aria-label="Close" data-close>×</button>
-
-  <div class="reg-step" data-step="form">
-    <h2 id="reg-title">2-Day CISSP Accelerator - Domain 1 Bootcamp</h2>
-    <p class="reg-sub">(Fill below details and Let Me Know Your Challenges)</p>
-
-    <form novalidate>
-      <input type="hidden" name="page" value="Paid bootcamp (INR 97)" />
-      <input type="hidden" name="bootcamp_dates" value="" />
-      <input type="hidden" name="bootcamp_times" value="" />
-      <input type="hidden" name="bootcamp_mode" value="" />
-      <!-- spam trap: hidden from people, bots tend to fill it in -->
-      <input class="reg-trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
-
-      <label class="reg-field">
-        <span>First name <b aria-hidden="true">*</b></span>
-        <input type="text" name="first_name" autocomplete="given-name" required maxlength="60" />
-        <small class="reg-error">Please enter your first name.</small>
-      </label>
-
-      <label class="reg-field">
-        <span>Email <b aria-hidden="true">*</b></span>
-        <input type="email" name="email" autocomplete="email" required maxlength="120" />
-        <small class="reg-error">Please enter a valid email address.</small>
-      </label>
-
-      <div class="reg-field reg-phone">
-        <label for="reg-phone-number">Phone No. <b aria-hidden="true">*</b></label>
-        <div class="phone-row">
-          <div class="country-pick">
-            <!-- the visible flag + code; the real (invisible) dropdown sits on top of it -->
-            <span class="country-face" aria-hidden="true"><span data-flag>🇮🇳</span> <span data-dial>+91</span> ▾</span>
-            <select name="country_iso" aria-label="Country code"></select>
-          </div>
-          <input id="reg-phone-number" type="tel" name="phone_number" autocomplete="tel-national" inputmode="tel" required maxlength="20" placeholder="81234 56789" />
-        </div>
-        <input type="hidden" name="phone" />
-        <input type="hidden" name="country" />
-        <small class="reg-error">Please choose your country and enter a valid phone number.</small>
-      </div>
-
-      <label class="reg-field">
-        <span>Challenges (if any)</span>
-        <textarea name="challenges" rows="3" maxlength="1000" placeholder="What’s been holding you back in your CISSP preparation?"></textarea>
-      </label>
-
-      <p class="reg-consent">By registering, you agree to our <a href="../privacy-policy/" target="_blank">Privacy Policy</a> and <a href="../terms-and-conditions/" target="_blank">Terms &amp; Conditions</a>.</p>
-      <button class="cta reg-submit" type="submit">Continue to Payment →</button>
-      <p class="reg-status" role="status"></p>
-    </form>
-  </div>
-
-  <div class="reg-step reg-done" data-step="done" hidden>
-    <div class="reg-tick" aria-hidden="true">✓</div>
-    <h2>Thank you, <span data-name>there</span>!</h2>
-    <p>Your registration for the 2-Day CISSP Accelerator - Domain 1 Bootcamp is received. You’ll receive the information you need to join the sessions, along with the relevant bootcamp details.</p>
-    <p class="reg-test" hidden><strong>Test mode:</strong> these details were not saved, because no form address is set yet (FORM_ENDPOINT at the top of the page).</p>
-    <button class="cta" type="button" data-close>Close</button>
-  </div>
-</dialog>
-
 <!-- Bar fixed to the bottom of the screen: dates, time and register button -->
 <div class="sticky-bar">
   <div class="container sticky-inner">
@@ -615,11 +547,10 @@
       <strong data-bootcamp="dates">14th &amp; 15th Oct 2026 (Wed–Thu)</strong>
       <span data-bootcamp="times" data-join=" / ">7:30 PM IST (India)</span>
     </div>
-    <a class="cta" data-register href="#">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
+    <a class="cta" data-register href="https://pages.razorpay.com/cisspaccelerator">Register Now for <span class="price">INR <s>2999</s> 97</span></a>
   </div>
 </div>
 
-<script src="../phone-countries.js"></script>
 <script src="../bootcamp.js"></script>
 </body>
 </html>
