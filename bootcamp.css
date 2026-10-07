@@ -442,6 +442,7 @@ p  { margin: 0 0 1em; }
 .reg-error { display: none; color: #d6293e; font-size: 0.82rem; margin-top: 4px; }
 .reg-field.invalid input { border-color: #d6293e; }
 .reg-field.invalid .reg-error { display: block; }
+.reg-trap { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .reg-consent { font-size: 0.8rem; color: var(--ink-soft); margin: 4px 0 14px; }
 .reg-consent a { color: var(--blue); }
 .reg-submit { width: 100%; border: 0; cursor: pointer; font-family: inherit; }

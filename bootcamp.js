@@ -120,6 +120,8 @@
 
     var info = window.BOOTCAMP || {};
     form.elements.bootcamp_dates.value = info.dates || "";
+    form.elements.bootcamp_times.value = [].concat(info.times || []).join(" / ");
+    form.elements.bootcamp_mode.value = info.mode || "";
     var country = byIso[select.value];
     form.elements.phone.value = "+" + country[2] + " " + phoneDigits();   // e.g. +91 9876543210
     form.elements.country.value = country[1];
@@ -145,7 +147,7 @@
     var google = endpoint.indexOf("script.google.com") !== -1;
     fetch(endpoint, {
       method: "POST",
-      body: data,
+      body: google ? new URLSearchParams(data) : data,   // Google scripts read this format most reliably
       mode: google ? "no-cors" : "cors",
       headers: google ? {} : { Accept: "application/json" }
     }).then(function (res) {
