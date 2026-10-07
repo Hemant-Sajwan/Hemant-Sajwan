@@ -1,13 +1,91 @@
 /* Shared script for the new bootcamp pages */
 
-// Point every "Reserve your seat" button at the page's registration link
+// Registration pop-up: every "Register Now" button opens the form
 (function () {
-  var url = window.REGISTRATION_URL;
-  if (!url || url === "#") return;
-  document.querySelectorAll("[data-register]").forEach(function (el) {
-    el.href = url;
-    el.target = "_blank";
-    el.rel = "noopener";
+  var modal = document.getElementById("register-form");
+  if (!modal) return;
+  var form = modal.querySelector("form");
+  var status = modal.querySelector(".reg-status");
+  var submit = modal.querySelector(".reg-submit");
+
+  function open(e) {
+    e.preventDefault();
+    showStep("form");
+    if (typeof modal.showModal === "function") modal.showModal(); else modal.setAttribute("open", "");
+    form.querySelector("input[name=first_name]").focus();
+  }
+  function close() { if (modal.close) modal.close(); else modal.removeAttribute("open"); }
+  function showStep(name) {
+    modal.querySelectorAll(".reg-step").forEach(function (s) { s.hidden = s.getAttribute("data-step") !== name; });
+  }
+
+  document.querySelectorAll("[data-register]").forEach(function (el) { el.addEventListener("click", open); });
+  modal.querySelectorAll("[data-close]").forEach(function (el) { el.addEventListener("click", close); });
+  // clicking the dark area outside the form closes it
+  modal.addEventListener("click", function (e) { if (e.target === modal) close(); });
+
+  // field checks: first name, email and phone are required
+  var rules = {
+    first_name: function (v) { return v.trim().length > 0; },
+    email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()); },
+    phone: function (v) { var d = v.replace(/\D/g, ""); return /^\+?[\d\s().-]+$/.test(v.trim()) && d.length >= 8 && d.length <= 15; }
+  };
+  function check(input) {
+    var rule = rules[input.name];
+    if (!rule) return true;
+    var ok = rule(input.value);
+    input.closest(".reg-field").classList.toggle("invalid", !ok);
+    input.setAttribute("aria-invalid", ok ? "false" : "true");
+    return ok;
+  }
+  form.querySelectorAll("input").forEach(function (input) {
+    input.addEventListener("blur", function () { if (input.value) check(input); });
+    input.addEventListener("input", function () {
+      if (input.closest(".reg-field") && input.closest(".reg-field").classList.contains("invalid")) check(input);
+    });
+  });
+
+  form.addEventListener("submit", function (e) {
+    e.preventDefault();
+    var firstBad = null;
+    Object.keys(rules).forEach(function (name) {
+      var input = form.elements[name];
+      if (!check(input) && !firstBad) firstBad = input;
+    });
+    if (firstBad) { firstBad.focus(); return; }
+
+    var info = window.BOOTCAMP || {};
+    form.elements.bootcamp_dates.value = info.dates || "";
+    var data = new FormData(form);
+    var name = form.elements.first_name.value.trim();
+    var endpoint = window.FORM_ENDPOINT;
+    var payment = window.PAYMENT_URL;
+
+    function done(testMode) {
+      if (payment) { window.location.href = payment; return; }   // paid page: go to payment
+      modal.querySelector("[data-name]").textContent = name;
+      modal.querySelector(".reg-test").hidden = !testMode;
+      form.reset();
+      showStep("done");
+    }
+
+    if (!endpoint) { done(true); return; }   // TEST MODE: nothing is sent anywhere
+
+    submit.disabled = true;
+    status.textContent = "Sending…";
+    var google = endpoint.indexOf("script.google.com") !== -1;
+    fetch(endpoint, {
+      method: "POST",
+      body: data,
+      mode: google ? "no-cors" : "cors",
+      headers: google ? {} : { Accept: "application/json" }
+    }).then(function (res) {
+      if (!google && !res.ok) throw new Error("Bad response");
+      status.textContent = "";
+      done(false);
+    }).catch(function () {
+      status.textContent = "Sorry, something went wrong. Please try again, or email support@hemantsajwan.com.";
+    }).then(function () { submit.disabled = false; });
   });
 })();
 

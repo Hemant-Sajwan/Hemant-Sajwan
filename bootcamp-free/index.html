@@ -12,7 +12,7 @@
 
 <!--
   ================================================================
-  EDIT EACH WEEK: bootcamp dates, time(s), mode and registration link
+  EDIT EACH WEEK: bootcamp dates, time(s) and mode
   ----------------------------------------------------------------
   Change the text between the quotes and save. The box under the
   video and the bar fixed to the bottom of the screen both update.
@@ -26,7 +26,19 @@
     times: ["7:30 PM IST (India)", "6 PM GST (UAE)"],
     mode:  "Zoom (English)"
   };
-  window.REGISTRATION_URL = "#";   // paste your sign-up link between the quotes
+</script>
+
+<!--
+  ================================================================
+  ONE-TIME SETTINGS: where registrations from the pop-up form go
+  ----------------------------------------------------------------
+  FORM_ENDPOINT: the web address that receives the form entries
+  (e.g. a Google Sheet script or Formspree link). While it is empty
+  the form runs in TEST MODE and nothing is saved.
+  ================================================================
+-->
+<script>
+  window.FORM_ENDPOINT = "";
 </script>
 </head>
 <body>
@@ -517,6 +529,56 @@
     </nav>
   </div>
 </footer>
+
+<!-- ===== REGISTRATION POP-UP (opens from every "Register Now" button) ===== -->
+<dialog class="reg-modal" id="register-form" aria-labelledby="reg-title">
+  <button class="reg-close" type="button" aria-label="Close" data-close>×</button>
+
+  <div class="reg-step" data-step="form">
+    <h2 id="reg-title">2-Day CISSP Accelerator - Domain 1 Bootcamp</h2>
+    <p class="reg-sub">(Fill below details and Let Me Know Your Challenges)</p>
+
+    <form novalidate>
+      <input type="hidden" name="page" value="Free bootcamp" />
+      <input type="hidden" name="bootcamp_dates" value="" />
+
+      <label class="reg-field">
+        <span>First name <b aria-hidden="true">*</b></span>
+        <input type="text" name="first_name" autocomplete="given-name" required maxlength="60" />
+        <small class="reg-error">Please enter your first name.</small>
+      </label>
+
+      <label class="reg-field">
+        <span>Email <b aria-hidden="true">*</b></span>
+        <input type="email" name="email" autocomplete="email" required maxlength="120" />
+        <small class="reg-error">Please enter a valid email address.</small>
+      </label>
+
+      <label class="reg-field">
+        <span>Phone No. (with country code) <b aria-hidden="true">*</b></span>
+        <input type="tel" name="phone" autocomplete="tel" required placeholder="+91 98765 43210" maxlength="22" />
+        <small class="reg-error">Please enter your phone number with country code, e.g. +91 98765 43210.</small>
+      </label>
+
+      <label class="reg-field">
+        <span>Challenges (if any)</span>
+        <textarea name="challenges" rows="3" maxlength="1000" placeholder="What’s been holding you back in your CISSP preparation?"></textarea>
+      </label>
+
+      <p class="reg-consent">By registering, you agree to our <a href="../privacy-policy/" target="_blank">Privacy Policy</a> and <a href="../terms-and-conditions/" target="_blank">Terms &amp; Conditions</a>.</p>
+      <button class="cta reg-submit" type="submit">Complete My Free Registration</button>
+      <p class="reg-status" role="status"></p>
+    </form>
+  </div>
+
+  <div class="reg-step reg-done" data-step="done" hidden>
+    <div class="reg-tick" aria-hidden="true">✓</div>
+    <h2>Thank you, <span data-name>there</span>!</h2>
+    <p>Your registration for the 2-Day CISSP Accelerator - Domain 1 Bootcamp is received. You’ll receive the information you need to join the sessions, along with the relevant bootcamp details.</p>
+    <p class="reg-test" hidden><strong>Test mode:</strong> these details were not saved, because no form address is set yet (FORM_ENDPOINT at the top of the page).</p>
+    <button class="cta" type="button" data-close>Close</button>
+  </div>
+</dialog>
 
 <!-- Bar fixed to the bottom of the screen: dates, time and register button -->
 <div class="sticky-bar">
