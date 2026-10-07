@@ -24,11 +24,75 @@
   // clicking the dark area outside the form closes it
   modal.addEventListener("click", function (e) { if (e.target === modal) close(); });
 
+  // ---- phone: country dropdown + number box ----
+  var select = form.elements.country_iso;
+  var numberBox = form.elements.phone_number;
+  var countries = window.PHONE_COUNTRIES || [];
+  var byIso = {};
+  countries.forEach(function (c) { byIso[c[0]] = c; });
+  var POPULAR = ["IN", "AE", "AU", "NZ", "US", "CA", "GB", "SG", "SA", "QA"];
+
+  function flag(iso) {   // turns "IN" into the 🇮🇳 flag emoji
+    return String.fromCodePoint.apply(null, iso.split("").map(function (ch) { return 127397 + ch.charCodeAt(0); }));
+  }
+  function addGroup(label, list) {
+    var group = document.createElement("optgroup");
+    group.label = label;
+    list.forEach(function (c) {
+      if (!c) return;
+      var o = document.createElement("option");
+      o.value = c[0];
+      o.textContent = flag(c[0]) + "  " + c[1] + " (+" + c[2] + ")";
+      group.appendChild(o);
+    });
+    select.appendChild(group);
+  }
+  addGroup("Popular", POPULAR.map(function (iso) { return byIso[iso]; }));
+  addGroup("All countries", countries);
+
+  // pre-select the likely country from the device's time zone (nothing is sent anywhere)
+  var guess = "IN";
+  try {
+    var zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    var cc = (window.TIMEZONE_COUNTRY || {})[zone];
+    if (cc && byIso[cc]) guess = cc;
+  } catch (err) { /* keep India */ }
+  select.value = guess;
+
+  function updateCountry() {
+    var c = byIso[select.value];
+    if (!c) return;
+    modal.querySelector("[data-flag]").textContent = flag(c[0]);
+    modal.querySelector("[data-dial]").textContent = "+" + c[2];
+    numberBox.placeholder = c[5] || "";
+  }
+  select.addEventListener("change", function () {
+    updateCountry();
+    if (numberBox.closest(".reg-field").classList.contains("invalid")) check(numberBox);
+  });
+  updateCountry();
+
+  // returns the number's digits (without country code or leading 0), or null if it doesn't look right
+  function phoneDigits() {
+    var c = byIso[select.value];
+    var raw = numberBox.value.trim();
+    if (!c || !raw || /[^\d\s().+-]/.test(raw)) return null;
+    var d = raw.replace(/\D/g, "");
+    var code = String(c[2]);
+    if (/^\s*(\+|00)/.test(raw)) {          // they typed the country code anyway
+      d = d.replace(/^00/, "");
+      if (d.indexOf(code) !== 0) return null;
+      d = d.slice(code.length);
+    }
+    d = d.replace(/^0+/, "");                // drop the local leading 0
+    return d.length >= c[3] && d.length <= c[4] ? d : null;
+  }
+
   // field checks: first name, email and phone are required
   var rules = {
     first_name: function (v) { return v.trim().length > 0; },
     email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()); },
-    phone: function (v) { var d = v.replace(/\D/g, ""); return /^\+?[\d\s().-]+$/.test(v.trim()) && d.length >= 8 && d.length <= 15; }
+    phone_number: function () { return phoneDigits() !== null; }
   };
   function check(input) {
     var rule = rules[input.name];
@@ -56,6 +120,9 @@
 
     var info = window.BOOTCAMP || {};
     form.elements.bootcamp_dates.value = info.dates || "";
+    var country = byIso[select.value];
+    form.elements.phone.value = "+" + country[2] + " " + phoneDigits();   // e.g. +91 9876543210
+    form.elements.country.value = country[1];
     var data = new FormData(form);
     var name = form.elements.first_name.value.trim();
     var endpoint = window.FORM_ENDPOINT;
@@ -66,6 +133,8 @@
       modal.querySelector("[data-name]").textContent = name;
       modal.querySelector(".reg-test").hidden = !testMode;
       form.reset();
+      select.value = guess;
+      updateCountry();
       showStep("done");
     }
 

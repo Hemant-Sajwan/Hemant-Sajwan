@@ -569,11 +569,20 @@
         <small class="reg-error">Please enter a valid email address.</small>
       </label>
 
-      <label class="reg-field">
-        <span>Phone No. (with country code) <b aria-hidden="true">*</b></span>
-        <input type="tel" name="phone" autocomplete="tel" required placeholder="+91 98765 43210" maxlength="22" />
-        <small class="reg-error">Please enter your phone number with country code, e.g. +91 98765 43210.</small>
-      </label>
+      <div class="reg-field reg-phone">
+        <label for="reg-phone-number">Phone No. <b aria-hidden="true">*</b></label>
+        <div class="phone-row">
+          <div class="country-pick">
+            <!-- the visible flag + code; the real (invisible) dropdown sits on top of it -->
+            <span class="country-face" aria-hidden="true"><span data-flag>🇮🇳</span> <span data-dial>+91</span> ▾</span>
+            <select name="country_iso" aria-label="Country code"></select>
+          </div>
+          <input id="reg-phone-number" type="tel" name="phone_number" autocomplete="tel-national" inputmode="tel" required maxlength="20" placeholder="81234 56789" />
+        </div>
+        <input type="hidden" name="phone" />
+        <input type="hidden" name="country" />
+        <small class="reg-error">Please choose your country and enter a valid phone number.</small>
+      </div>
 
       <label class="reg-field">
         <span>Challenges (if any)</span>
@@ -606,6 +615,7 @@
   </div>
 </div>
 
+<script src="../phone-countries.js"></script>
 <script src="../bootcamp.js"></script>
 </body>
 </html>
