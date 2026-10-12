@@ -129,7 +129,7 @@ function testSetup() {
   var me = Session.getActiveUser().getEmail();
   var ok = sendConfirmation({
     firstName: "Hemant (test)", email: me, dates: "14th & 15th Oct 2026 (Wed–Thu)",
-    times: "7:30 PM IST (India)", mode: "Zoom (English)", challenges: "Test"
+    times: "7:30 PM IST (India)", mode: "Online (English)", challenges: "Test"
   });
   console.log(ok ? "Test email sent to " + me : "Test email could not be sent");
 }

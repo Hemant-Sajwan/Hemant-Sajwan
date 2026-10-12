@@ -323,16 +323,30 @@ p  { margin: 0 0 1em; }
 .footer-links a:hover { color: var(--gold); text-decoration: underline; }
 .footer-links span { opacity: 0.4; }
 
-/* ---------- bootcamp details box (under the video) ---------- */
-.event-box {
-  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; max-width: 760px; margin: 0 auto 2.2em;
-  background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: var(--radius); overflow: hidden; text-align: center;
+/* ---------- bootcamp details panel (under the video): details left, button right ---------- */
+.event-panel {
+  display: grid; grid-template-columns: 1.45fr 1fr; gap: 28px; align-items: center;
+  max-width: 1000px; margin: 0 auto 1em; padding: 28px 32px; text-align: left;
+  background: var(--blue-darker); border: 2px solid var(--gold); border-radius: 18px;
+  box-shadow: 0 24px 50px -22px rgba(0, 0, 0, 0.7);
 }
-.event-item { background: var(--blue-dark); padding: 18px 14px; display: flex; flex-direction: column; gap: 4px; }
-.event-k { color: var(--gold); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; }
-.event-v { font-weight: 600; font-size: 1.05rem; white-space: pre-line; }
-.event-note { font-size: 0.85rem; opacity: 0.8; }
+.event-details { display: grid; gap: 18px; }
+.event-item { display: flex; align-items: center; gap: 16px; }
+.event-icon {
+  flex: 0 0 58px; width: 58px; height: 58px; padding: 11px; border-radius: 14px;
+  background: rgba(255, 212, 1, 0.12); border: 1px solid rgba(255, 212, 1, 0.35);
+  fill: none; stroke: var(--gold); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round;
+}
+.event-icon .dot { fill: var(--gold); stroke: none; }
+.event-icon .hand { stroke: var(--white); }
+.event-item > div { display: flex; flex-direction: column; }
+.event-k { color: var(--gold); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.event-v { font-weight: 700; font-size: clamp(1.15rem, 2.2vw, 1.4rem); line-height: 1.35; white-space: pre-line; }
+.event-note { font-size: 0.95rem; opacity: 0.85; }
+.event-action { text-align: center; padding-left: 28px; border-left: 1px solid rgba(255, 255, 255, 0.15); }
+.event-action .cta { display: block; padding: 18px 16px; font-size: 1.02rem; }
+.event-action .cta-meta { font-size: 0.88rem; }
+.event-v { text-wrap: balance; }
 
 /* ---------- bar fixed to the bottom of the screen ---------- */
 .sticky-bar {
@@ -365,8 +379,9 @@ p  { margin: 0 0 1em; }
   .topbar .cta { display: none; }
   .cta-meta { font-size: 0.82rem; }
   .cta-guarantee { font-size: 0.78rem; }
-  .event-box { grid-template-columns: 1fr; }
-  .event-item { padding: 12px; }
+  .event-panel { grid-template-columns: 1fr; gap: 22px; padding: 22px 18px; }
+  .event-action { padding-left: 0; border-left: 0; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.15); }
+  .event-icon { flex-basis: 50px; width: 50px; height: 50px; padding: 10px; }
   .sticky-bar { padding: 8px 0 10px; }
   .sticky-inner { flex-direction: column; gap: 6px; padding: 0 12px; }
   .sticky-info { flex-direction: row; flex-wrap: wrap; justify-content: center; column-gap: 8px; font-size: 0.8rem; text-align: center; }
