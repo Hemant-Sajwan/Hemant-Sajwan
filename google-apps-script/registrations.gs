@@ -12,6 +12,8 @@
  *      Your other tabs (and Pabbly) are never touched.
  *   2. Sends a confirmation email to the person (free-bootcamp entries only;
  *      paid-page entries haven't paid yet, so they are marked "Payment pending").
+ *   3. Sends a WhatsApp confirmation (approved template) through the Meta WhatsApp
+ *      Cloud API, once the keys are added (see WHATSAPP-SETUP.md). Same rule as the email.
  */
 
 // ================== SETTINGS – edit these if you like ==================
@@ -41,7 +43,21 @@ var SETTINGS = {
 
   // Paid-page entries: send the confirmation email only after payment (false),
   // or straight away like free entries (true).
-  EMAIL_PAID_BEFORE_PAYMENT: false
+  EMAIL_PAID_BEFORE_PAYMENT: false,
+
+  // ---- WhatsApp confirmation (Meta WhatsApp Cloud API) ----
+  // The access token and phone number ID are NOT stored here. They go in
+  // Project Settings → Script Properties (WHATSAPP_TOKEN, WHATSAPP_PHONE_NUMBER_ID).
+  // Until both are there, no WhatsApp message is sent.
+  SEND_WHATSAPP: true,
+  WHATSAPP_TEMPLATE: "bootcamp_registration",   // template name exactly as approved in WhatsApp Manager
+  WHATSAPP_LANGUAGE: "en",                      // template language code, e.g. "en" or "en_US"
+  // What fills the template's {{1}}, {{2}}, {{3}} ... in that order.
+  // Choices: "firstName", "dates", "times", "mode", "email"
+  WHATSAPP_PARAMS: ["firstName", "dates", "times"],
+  // Your own WhatsApp number (with country code) for the testWhatsApp function, e.g. "+91 98765 43210"
+  WHATSAPP_TEST_NUMBER: "",
+  GRAPH_API_VERSION: "v23.0"
 };
 // =======================================================================
 
@@ -79,6 +95,10 @@ function doPost(e) {
   // send the email first so its result can be recorded in the row
   if (SETTINGS.SEND_EMAIL && (!isPaid || SETTINGS.EMAIL_PAID_BEFORE_PAYMENT)) {
     status += sendConfirmation(entry) ? " · email sent" : " · email NOT sent";
+  }
+  if (SETTINGS.SEND_WHATSAPP && (!isPaid || SETTINGS.EMAIL_PAID_BEFORE_PAYMENT)) {
+    var wa = sendWhatsApp(entry);
+    if (wa) status += wa.ok ? " · WhatsApp sent" : " · WhatsApp NOT sent";   // nothing added while not set up
   }
 
   var lock = LockService.getScriptLock();
@@ -157,6 +177,58 @@ function sendConfirmation(entry) {
     console.error("Email failed: " + err);
     return false;
   }
+}
+
+/**
+ * Sends the WhatsApp template message.
+ * Returns null when WhatsApp isn't set up yet, otherwise { ok: true/false, detail: "..." }.
+ */
+function sendWhatsApp(entry) {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty("WHATSAPP_TOKEN");
+  var phoneId = props.getProperty("WHATSAPP_PHONE_NUMBER_ID");
+  if (!token || !phoneId) return null;
+  var to = String(entry.phone || "").replace(/\D/g, "");          // "+91 98765 43210" -> "919876543210"
+  if (to.length < 8) return { ok: false, detail: "phone number too short" };
+  var params = SETTINGS.WHATSAPP_PARAMS.map(function (key) {
+    // template values may not contain line breaks or long runs of spaces
+    var text = String(entry[key] || "-").replace(/\s+/g, " ").trim() || "-";
+    return { type: "text", text: text };
+  });
+  var template = { name: SETTINGS.WHATSAPP_TEMPLATE, language: { code: SETTINGS.WHATSAPP_LANGUAGE } };
+  if (params.length) template.components = [{ type: "body", parameters: params }];
+  try {
+    var res = UrlFetchApp.fetch(
+      "https://graph.facebook.com/" + SETTINGS.GRAPH_API_VERSION + "/" + encodeURIComponent(phoneId) + "/messages", {
+        method: "post",
+        contentType: "application/json",
+        headers: { Authorization: "Bearer " + token },
+        payload: JSON.stringify({ messaging_product: "whatsapp", to: to, type: "template", template: template }),
+        muteHttpExceptions: true
+      });
+    var code = res.getResponseCode();
+    var body = res.getContentText();
+    if (code >= 200 && code < 300) return { ok: true, detail: body };
+    console.error("WhatsApp failed (" + code + "): " + body);
+    return { ok: false, detail: code + " " + body };
+  } catch (err) {
+    console.error("WhatsApp failed: " + err);
+    return { ok: false, detail: String(err) };
+  }
+}
+
+/**
+ * Run this from the editor after adding the WhatsApp keys (select "testWhatsApp", click Run).
+ * Sends the template to WHATSAPP_TEST_NUMBER only, with sample details, and shows Meta's answer.
+ */
+function testWhatsApp() {
+  if (!SETTINGS.WHATSAPP_TEST_NUMBER) { console.log("Put your number in WHATSAPP_TEST_NUMBER first."); return; }
+  var r = sendWhatsApp({
+    firstName: "Hemant (test)", phone: SETTINGS.WHATSAPP_TEST_NUMBER,
+    dates: "14th & 15th Oct 2026 (Wed–Thu)", times: "7:30 PM IST (India)", mode: "Online (English)", email: "test"
+  });
+  if (!r) console.log("WhatsApp is not set up: add WHATSAPP_TOKEN and WHATSAPP_PHONE_NUMBER_ID in Project Settings → Script Properties.");
+  else console.log((r.ok ? "Sent. " : "NOT sent. ") + "Meta replied: " + r.detail);
 }
 
 /**
