@@ -6,7 +6,9 @@
  * Then deploy it as a Web app (see SETUP.md next to this file).
  *
  * What it does for every registration from the pop-up form:
- *   1. Adds a row to the "Bootcamp Registrations" tab (created if missing).
+ *   1. Adds a row to the tab for that bootcamp batch (created if missing):
+ *      "morning-bootcamp" (Mon–Tue) or "evening-bootcamp" (Wed–Thu).
+ *      The page says which one (batch: "morning" / "evening" at the top of the page).
  *      Your other tabs (and Pabbly) are never touched.
  *   2. Sends a confirmation email to the person (free-bootcamp entries only;
  *      paid-page entries haven't paid yet, so they are marked "Payment pending").
@@ -14,7 +16,13 @@
 
 // ================== SETTINGS – edit these if you like ==================
 var SETTINGS = {
-  TAB_NAME: "Bootcamp Registrations",
+  // One tab per bootcamp batch. The left side is the "batch" value set at the top of each landing page.
+  TABS: {
+    morning: "morning-bootcamp",   // Mon–Tue bootcamp
+    evening: "evening-bootcamp"    // Wed–Thu bootcamp
+  },
+  // Entries from a page with no (or an unknown) batch value go here.
+  DEFAULT_TAB: "morning-bootcamp",
 
   SEND_EMAIL: true,                       // false = only save to the sheet
   FROM_NAME: "Hemant Sajwan",             // name people see as the sender
@@ -53,7 +61,8 @@ function doPost(e) {
     page: clean(p.page, 60),
     dates: clean(p.bootcamp_dates, 80),
     times: clean(p.bootcamp_times, 120),
-    mode: clean(p.bootcamp_mode, 60)
+    mode: clean(p.bootcamp_mode, 60),
+    batch: clean(p.batch, 20).toLowerCase()
   };
   if (!entry.firstName || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(entry.email) || !entry.phone) {
     return reply({ ok: false, error: "missing or invalid fields" });
@@ -70,7 +79,7 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);   // one write at a time, so rows never overlap
   try {
-    getTab().appendRow([
+    getTab(tabFor(entry.batch)).appendRow([
       new Date(), entry.firstName, entry.email, entry.phone, entry.country, entry.challenges,
       entry.page, entry.dates, entry.times, status
     ].map(safeCell));
@@ -130,7 +139,7 @@ function sendConfirmation(entry) {
  * so you can check how it looks. Nothing is sent to anyone else.
  */
 function testSetup() {
-  getTab();
+  setupTabs();
   var me = Session.getActiveUser().getEmail();
   var ok = sendConfirmation({
     firstName: "Hemant (test)", email: me, dates: "14th & 15th Oct 2026 (Wed–Thu)",
@@ -139,12 +148,26 @@ function testSetup() {
   console.log(ok ? "Test email sent to " + me : "Test email could not be sent");
 }
 
-// ---------------- helpers ----------------
-function getTab() {
+/**
+ * Run this once from the editor (select "setupTabs" at the top, click Run).
+ * Renames the old "Bootcamp Registrations" tab to the morning tab (rows kept)
+ * and creates any batch tab that is missing. Sends no email.
+ */
+function setupTabs() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(SETTINGS.TAB_NAME);
+  var old = ss.getSheetByName("Bootcamp Registrations");
+  if (old && !ss.getSheetByName(SETTINGS.DEFAULT_TAB)) old.setName(SETTINGS.DEFAULT_TAB);
+  Object.keys(SETTINGS.TABS).forEach(function (k) { getTab(SETTINGS.TABS[k]); });
+  console.log("Tabs ready: " + Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).join(", "));
+}
+
+// ---------------- helpers ----------------
+function tabFor(batch) { return SETTINGS.TABS[batch] || SETTINGS.DEFAULT_TAB; }
+function getTab(name) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(name);
   if (!sh) {
-    sh = ss.insertSheet(SETTINGS.TAB_NAME);
+    sh = ss.insertSheet(name);
     sh.appendRow(COLUMNS);
     sh.getRange(1, 1, 1, COLUMNS.length).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
     sh.setFrozenRows(1);

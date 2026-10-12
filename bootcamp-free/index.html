@@ -18,13 +18,16 @@
   video and the bar fixed to the bottom of the screen both update.
   For more than one time, add another "..." inside the [ ] brackets,
   separated by a comma.
+  batch: which tab of the Google Sheet the registrations go to:
+  "morning" (Mon–Tue bootcamp) or "evening" (Wed–Thu bootcamp).
   ================================================================
 -->
 <script>
   window.BOOTCAMP = {
     dates: "14th & 15th Oct 2026 (Wed–Thu)",
     times: ["7:30 PM IST (India)", "6 PM GST (UAE)"],
-    mode:  "Online (English)"
+    mode:  "Online (English)",
+    batch: "evening"
   };
 </script>
 
@@ -598,6 +601,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <input type="hidden" name="bootcamp_dates" value="" />
       <input type="hidden" name="bootcamp_times" value="" />
       <input type="hidden" name="bootcamp_mode" value="" />
+      <input type="hidden" name="batch" value="" />
       <!-- spam trap: hidden from people, bots tend to fill it in -->
       <input class="reg-trap" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" />
 

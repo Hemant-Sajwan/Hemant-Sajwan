@@ -22,7 +22,7 @@ About 10 minutes. You only do this once. Nothing here affects Pabbly or your exi
    - Click **Review permissions** and choose your Google account.
    - Google lists what the script may do (manage this spreadsheet, send email as you). That's expected.
    - You'll see **"Google hasn't verified this app"**. This is normal for your own private script. Click **Advanced → Go to Bootcamp registrations (unsafe)** → **Allow**.
-4. Check your spreadsheet: a new tab **Bootcamp Registrations** with blue headings should appear.
+4. Check your spreadsheet: two tabs, **morning-bootcamp** (Mon–Tue) and **evening-bootcamp** (Wed–Thu), with blue headings should appear.
 5. Check your inbox: you should receive a sample confirmation email.
 
 ## 4. Publish it as a web app
@@ -39,5 +39,7 @@ About 10 minutes. You only do this once. Nothing here affects Pabbly or your exi
 ## Good to know
 - **Changing the script later:** after editing, go to **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy**. The link stays the same.
 - **Email limits:** about 100 emails a day on a free Gmail account, 1,500 on Google Workspace. If the limit is reached, the row still saves and shows "email NOT sent".
+- **Which tab:** each landing page has `batch: "morning"` or `batch: "evening"` in its `EDIT EACH WEEK` block.
+  Entries go to the matching tab. Tab names can be changed in `TABS` in the SETTINGS block.
 - **Paid page:** entries are saved as **Payment pending** and get no email until payment is set up.
 - **Privacy:** entries go straight from the website to your own Google account. No other service is involved.
