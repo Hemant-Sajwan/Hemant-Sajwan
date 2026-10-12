@@ -27,7 +27,7 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
 9. [ ] **Merge the draft branch into `main`** (via pull request) so GitHub Pages publishes the pages.
 
 ## Open questions / nice to have
-- [ ] Facebook Pixel + Google Tag Manager on the landing pages too (thank-you page already has them).
+- [x] Facebook Pixel + Google Tag Manager on all three pages (same IDs as the live site).
 - [ ] Track paid sign-ups as "Purchase" (INR 97) instead of "Lead".
 - [ ] Day 2 intro line mentions Day 1 topics. Suggested replacement is in the chat history.
 - [ ] Q&A wording now that "live" has been removed.
