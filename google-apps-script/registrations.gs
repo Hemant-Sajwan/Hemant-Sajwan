@@ -36,6 +36,9 @@ var SETTINGS = {
   // Leave "" and the email says the joining details will follow.
   ZOOM_LINK: "",
 
+  // WhatsApp community link shown in the email
+  WHATSAPP_LINK: "https://wa.cisspaccelerator.com/",
+
   // Paid-page entries: send the confirmation email only after payment (false),
   // or straight away like free entries (true).
   EMAIL_PAID_BEFORE_PAYMENT: false
@@ -101,25 +104,45 @@ function doGet() {
 function sendConfirmation(entry) {
   try {
     if (MailApp.getRemainingDailyQuota() < 1) return false;
-    var joining = SETTINGS.ZOOM_LINK
-      ? 'Join on Zoom: <a href="' + esc(SETTINGS.ZOOM_LINK) + '">' + esc(SETTINGS.ZOOM_LINK) + "</a>"
-      : "You’ll receive the information you need to join the sessions before the bootcamp.";
-    var challengeLine = entry.challenges
-      ? "<p>Thank you for sharing your challenges. I’ll keep them in mind during the sessions.</p>"
-      : "";
+    var p = function (html) { return '<p style="margin:0 0 14px">' + html + "</p>"; };
+    var joinHtml = SETTINGS.ZOOM_LINK
+      ? '<a href="' + esc(SETTINGS.ZOOM_LINK) + '">' + esc(SETTINGS.ZOOM_LINK) + "</a>"
+      : "<em>Will be shared as we get closer to the bootcamp</em>";
+    var joinText = SETTINGS.ZOOM_LINK || "Will be shared as we get closer to the bootcamp";
+    var wa = SETTINGS.WHATSAPP_LINK;
     var html =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#0d1b2a;max-width:560px">' +
-      "<p>Hi " + esc(entry.firstName) + ",</p>" +
-      "<p>Thank you for registering for the <strong>2-Day CISSP Accelerator – Domain 1 Bootcamp</strong>.</p>" +
-      '<table style="border-collapse:collapse;margin:12px 0;background:#eef2f7;border-left:4px solid #FFD401">' +
-      row("Dates", entry.dates) + row("Time", entry.times) + row("Mode", entry.mode) +
+      p("Hi " + esc(entry.firstName) + ",") +
+      p("Congratulations on signing up, and welcome to the <strong>2-Day CISSP Accelerator - Domain 1 Bootcamp</strong>!") +
+      p("You’ve made a smart move toward crushing your CISSP goals, and I’m here to help you do it with clarity, confidence, and speed.") +
+      p("<strong>🗓️ Bootcamp Schedule:</strong>") +
+      '<table style="border-collapse:collapse;margin:0 0 14px;background:#eef2f7;border-left:4px solid #FFD401">' +
+      row("Dates:", esc(entry.dates)) + row("Time:", esc(entry.times)) + row("Join Link:", joinHtml) +
       "</table>" +
-      "<p>" + joining + "</p>" +
-      challengeLine +
-      "<p>Have a question? Just reply to this email.</p>" +
-      "<p>See you there,<br>Hemant Sajwan<br>CISSP Accelerator</p>" +
+      p("You’ll get 2 days of focused, high-impact training covering the Domain 1 of CISSP designed to simplify complex concepts and accelerate your exam prep.") +
+      p("<strong>📬 What’s next?</strong>") +
+      p("Join our whatsapp community to get useful updates and resources:<br>" +
+        '<a href="' + esc(wa) + '">' + esc(wa.replace(/^https?:\/\//, "")) + "</a>") +
+      p("You’ll receive reminders and joining link before each session. Block your calendar so that you don't miss out.") +
+      p("And in case this email landed in your spam or promotions or junk folder, please mark it as “Not Spam/Promotion/Junk”, so you don’t miss such emails the next time.") +
+      p("Get ready to:<br>✅ Simplify your CISSP strategy<br>✅ Avoid overwhelm with a structured plan<br>✅ Understand the concepts so they stick longer") +
+      p("This isn’t another generic training. It’s a fast-track to getting CISSP-ready, minus the stress.") +
+      p("Excited to see you in the sessions,<br><br>Hemant") +
       "</div>";
-    var plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    var plain = [
+      "Hi " + entry.firstName + ",",
+      "Congratulations on signing up, and welcome to the 2-Day CISSP Accelerator - Domain 1 Bootcamp!",
+      "You’ve made a smart move toward crushing your CISSP goals, and I’m here to help you do it with clarity, confidence, and speed.",
+      "🗓️ Bootcamp Schedule:\nDates: " + (entry.dates || "") + "\nTime: " + (entry.times || "") + "\nJoin Link: " + joinText,
+      "You’ll get 2 days of focused, high-impact training covering the Domain 1 of CISSP designed to simplify complex concepts and accelerate your exam prep.",
+      "📬 What’s next?",
+      "Join our whatsapp community to get useful updates and resources:\n" + wa,
+      "You’ll receive reminders and joining link before each session. Block your calendar so that you don't miss out.",
+      "And in case this email landed in your spam or promotions or junk folder, please mark it as “Not Spam/Promotion/Junk”, so you don’t miss such emails the next time.",
+      "Get ready to:\n✅ Simplify your CISSP strategy\n✅ Avoid overwhelm with a structured plan\n✅ Understand the concepts so they stick longer",
+      "This isn’t another generic training. It’s a fast-track to getting CISSP-ready, minus the stress.",
+      "Excited to see you in the sessions,\n\nHemant"
+    ].join("\n\n");
     var opts = { name: SETTINGS.FROM_NAME, replyTo: SETTINGS.REPLY_TO, htmlBody: html };
     var owner = String(Session.getEffectiveUser().getEmail() || "").toLowerCase();
     var from = String(SETTINGS.FROM_ADDRESS || "").toLowerCase();
@@ -210,9 +233,10 @@ function esc(s) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
   });
 }
-function row(label, value) {
-  return value ? '<tr><td style="padding:6px 14px;font-weight:bold">' + label + '</td><td style="padding:6px 14px">' +
-    esc(value) + "</td></tr>" : "";
+// value must already be HTML-safe (use esc() on user text)
+function row(label, valueHtml) {
+  return '<tr><td style="padding:6px 14px;font-weight:bold;vertical-align:top">' + label +
+    '</td><td style="padding:6px 14px">' + valueHtml + "</td></tr>";
 }
 function reply(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
