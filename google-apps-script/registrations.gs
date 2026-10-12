@@ -42,8 +42,10 @@ var SETTINGS = {
 };
 // =======================================================================
 
-var COLUMNS = ["Timestamp", "First name", "Email", "Phone", "Country", "Challenges",
-               "Page", "Bootcamp dates", "Bootcamp time", "Status"];
+// Column order for the tabs. Each value is written under the column with the same heading,
+// so you can also drag columns around in the sheet yourself (keep the headings unchanged).
+var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Timestamp", "First name", "Email", "Phone",
+               "Country", "Challenges", "Page", "Status"];
 
 /** Receives each registration from the website form. */
 function doPost(e) {
@@ -79,10 +81,11 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);   // one write at a time, so rows never overlap
   try {
-    getTab(tabFor(entry.batch)).appendRow([
-      new Date(), entry.firstName, entry.email, entry.phone, entry.country, entry.challenges,
-      entry.page, entry.dates, entry.times, status
-    ].map(safeCell));
+    appendByHeading(getTab(tabFor(entry.batch)), {
+      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Timestamp": new Date(),
+      "First name": entry.firstName, "Email": entry.email, "Phone": entry.phone,
+      "Country": entry.country, "Challenges": entry.challenges, "Page": entry.page, "Status": status
+    });
   } finally {
     lock.releaseLock();
   }
@@ -150,14 +153,15 @@ function testSetup() {
 
 /**
  * Run this once from the editor (select "setupTabs" at the top, click Run).
- * Renames the old "Bootcamp Registrations" tab to the morning tab (rows kept)
- * and creates any batch tab that is missing. Sends no email.
+ * Renames the old "Bootcamp Registrations" tab to the morning tab (rows kept),
+ * creates any batch tab that is missing, and puts the columns of every batch tab
+ * in the COLUMNS order (existing rows move with their columns). Sends no email.
  */
 function setupTabs() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var old = ss.getSheetByName("Bootcamp Registrations");
   if (old && !ss.getSheetByName(SETTINGS.DEFAULT_TAB)) old.setName(SETTINGS.DEFAULT_TAB);
-  Object.keys(SETTINGS.TABS).forEach(function (k) { getTab(SETTINGS.TABS[k]); });
+  Object.keys(SETTINGS.TABS).forEach(function (k) { orderColumns(getTab(SETTINGS.TABS[k])); });
   console.log("Tabs ready: " + Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).join(", "));
 }
 
@@ -171,9 +175,32 @@ function getTab(name) {
     sh.appendRow(COLUMNS);
     sh.getRange(1, 1, 1, COLUMNS.length).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
     sh.setFrozenRows(1);
-    sh.getRange("A:A").setNumberFormat("dd mmm yyyy, hh:mm");
+    var ts = COLUMNS.indexOf("Timestamp") + 1;
+    sh.getRange(1, ts, sh.getMaxRows(), 1).setNumberFormat("dd mmm yyyy, hh:mm");
   }
   return sh;
+}
+function headings(sh) {
+  var n = sh.getLastColumn();
+  return n ? sh.getRange(1, 1, 1, n).getValues()[0].map(function (h) { return String(h).trim(); }) : [];
+}
+// Adds one row, putting each value under its heading. A missing heading is added at the end.
+function appendByHeading(sh, values) {
+  var head = headings(sh);
+  Object.keys(values).forEach(function (h) {
+    if (head.indexOf(h) === -1) {
+      head.push(h);
+      sh.getRange(1, head.length).setValue(h).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
+    }
+  });
+  sh.appendRow(head.map(function (h) { return h in values ? safeCell(values[h]) : ""; }));
+}
+// Moves columns (with their data) so the headings follow the COLUMNS order.
+function orderColumns(sh) {
+  COLUMNS.forEach(function (name, i) {
+    var at = headings(sh).indexOf(name) + 1;
+    if (at > 0 && at !== i + 1) sh.moveColumns(sh.getRange(1, at, sh.getMaxRows(), 1), i + 1);
+  });
 }
 function clean(v, max) { return String(v || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max); }
 // stop text like "=..." or "+91..." being treated as a spreadsheet formula
