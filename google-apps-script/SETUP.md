@@ -11,6 +11,8 @@ About 10 minutes. You only do this once. Nothing here affects Pabbly or your exi
 1. In the editor, select everything in the `Code.gs` file and delete it.
 2. Open `registrations.gs` (sent to you with these steps, also in the `google-apps-script` folder of the repository), copy **all** of it, and paste it in.
 3. Optional: in the **SETTINGS** block near the top, change the sender name, reply-to address, email subject or add a Zoom link.
+   Emails are sent **from `support@hemantsajwan.com`** (`FROM_ADDRESS`), as long as the Google account you're
+   using *is* support@, or has support@ set up under Gmail → Settings → Accounts → **"Send mail as"**.
 4. Click the **Save** icon (💾).
 
 ## 3. Test it (sends one sample email to you only)
@@ -18,6 +20,7 @@ About 10 minutes. You only do this once. Nothing here affects Pabbly or your exi
 2. Click **Run**.
 3. Google asks for permission the first time:
    - Click **Review permissions** and choose your Google account.
+   - Google lists what the script may do (manage this spreadsheet, send email as you). That's expected.
    - You'll see **"Google hasn't verified this app"**. This is normal for your own private script. Click **Advanced → Go to Bootcamp registrations (unsafe)** → **Allow**.
 4. Check your spreadsheet: a new tab **Bootcamp Registrations** with blue headings should appear.
 5. Check your inbox: you should receive a sample confirmation email.

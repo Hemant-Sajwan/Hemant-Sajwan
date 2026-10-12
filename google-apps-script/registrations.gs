@@ -19,6 +19,9 @@ var SETTINGS = {
   SEND_EMAIL: true,                       // false = only save to the sheet
   FROM_NAME: "Hemant Sajwan",             // name people see as the sender
   REPLY_TO: "support@hemantsajwan.com",   // where replies go
+  // Send from this address (Google Workspace). It must be the account that owns this sheet,
+  // or a "Send mail as" alias of it in Gmail settings. Otherwise the email comes from the owner's address.
+  FROM_ADDRESS: "support@hemantsajwan.com",
   EMAIL_SUBJECT: "You're registered: 2-Day CISSP Accelerator – Domain 1 Bootcamp",
 
   // Optional: paste the Zoom link to include it in the email, e.g. "https://zoom.us/j/123..."
@@ -104,14 +107,16 @@ function sendConfirmation(entry) {
       "<p>Have a question? Just reply to this email.</p>" +
       "<p>See you there,<br>Hemant Sajwan<br>CISSP Accelerator</p>" +
       "</div>";
-    MailApp.sendEmail({
-      to: entry.email,
-      subject: SETTINGS.EMAIL_SUBJECT,
-      name: SETTINGS.FROM_NAME,
-      replyTo: SETTINGS.REPLY_TO,
-      htmlBody: html,
-      body: html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim()
-    });
+    var plain = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    var opts = { name: SETTINGS.FROM_NAME, replyTo: SETTINGS.REPLY_TO, htmlBody: html };
+    var owner = String(Session.getEffectiveUser().getEmail() || "").toLowerCase();
+    var from = String(SETTINGS.FROM_ADDRESS || "").toLowerCase();
+    if (from && from !== owner && GmailApp.getAliases().map(function (a) { return a.toLowerCase(); }).indexOf(from) !== -1) {
+      opts.from = SETTINGS.FROM_ADDRESS;              // send as the support@ alias
+      GmailApp.sendEmail(entry.email, SETTINGS.EMAIL_SUBJECT, plain, opts);
+    } else {
+      MailApp.sendEmail(entry.email, SETTINGS.EMAIL_SUBJECT, plain, opts);   // owner's own address
+    }
     return true;
   } catch (err) {
     console.error("Email failed: " + err);
