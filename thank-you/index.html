@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Your Seat is Confirmed | CISSP Accelerator – Domain 1 Bootcamp</title>
+<meta name="description" content="Your seat for the 2-Day CISSP Accelerator – Domain 1 Bootcamp is confirmed." />
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="../bootcamp.css" />
+
+<!--
+  WHATSAPP COMMUNITY LINK: change it here if you create a new community.
+-->
+<script>window.WHATSAPP_COMMUNITY_URL = "https://chat.whatsapp.com/JMlNHqjLhQwAamcQGyh7eD";</script>
+</head>
+<body class="ty-page">
+
+<!-- ===== BANNER ===== -->
+<header class="ty-banner">
+  <div class="container">
+    <h1><span class="gold-text">Congratulations!</span><br />Your Seat is Confirmed</h1>
+  </div>
+</header>
+
+<!-- ===== MAIN ===== -->
+<main class="ty-main">
+  <div class="container">
+    <h2 class="ty-title">For our 2-Day CISSP Accelerator - Domain 1 Bootcamp</h2>
+
+    <div class="ty-photo">
+      <div class="headshot ty-headshot">
+        <div class="headshot-clip">
+          <img src="../images/hemant-headshot.webp" alt="Hemant Sajwan, CISSP mentor" width="443" height="450" />
+        </div>
+      </div>
+    </div>
+
+    <a class="ty-whatsapp" data-whatsapp href="https://chat.whatsapp.com/JMlNHqjLhQwAamcQGyh7eD" target="_blank" rel="noopener">
+      <span class="ty-whatsapp-main">Click Here to Join The WhatsApp Community!</span>
+      <span class="ty-whatsapp-sub">Only admin will be able to see your number as this is a community 🙂</span>
+    </a>
+
+    <div class="ty-steps">
+      <div class="ty-step">
+        <span class="ty-step-badge">Step 1</span>
+        <svg class="ty-step-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <rect x="6" y="14" width="52" height="38" rx="6" class="fill-blue" />
+          <path d="M10 19l22 17 22-17" class="line-white" />
+          <circle cx="51" cy="15" r="9" class="fill-gold" />
+          <path d="M47 15l3 3 5-6" class="line-blue" />
+        </svg>
+        <h3>Check Registered Email</h3>
+        <p>Check your registered email where we have sent the details of workshop.</p>
+      </div>
+
+      <div class="ty-step">
+        <span class="ty-step-badge">Step 2</span>
+        <svg class="ty-step-icon" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M32 7C18.2 7 7 17.3 7 30c0 5.6 2.2 10.7 5.8 14.7L10 57l12.7-5.2c2.9 1 6.1 1.6 9.3 1.6 13.8 0 25-10.3 25-23.2S45.8 7 32 7z" class="fill-green" />
+          <path d="M23 25h18M23 33h12" class="line-white" />
+        </svg>
+        <h3>Check Your WhatsApp Message</h3>
+        <p>You should also have received the 121 WhatsApp message from Us.</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="footer footer-plain">
+  <div class="container">
+    <p class="disclaimer">This site is not part of the Google website or Google Inc., or the Facebook website or Facebook Inc. This site is not endorsed by Google Inc. or Facebook Inc. in any way.</p>
+    <p>Copyright © CISSP Accelerator. All Rights Reserved.</p>
+    <p>© <span id="year">2026</span> Hemant Sajwan Academy. All rights reserved.</p>
+    <nav class="footer-links">
+      <a href="../privacy-policy/">Privacy Policy</a>
+      <span>|</span>
+      <a href="../terms-and-conditions/">Terms &amp; Conditions</a>
+      <span>|</span>
+      <a href="../refund-policy/">Refund Policy</a>
+      <span>|</span>
+      <a href="../contact-us/">Contact Us</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../bootcamp.js"></script>
+<script>
+  // use the WhatsApp link set at the top of this page
+  document.querySelectorAll("[data-whatsapp]").forEach(function (a) {
+    if (window.WHATSAPP_COMMUNITY_URL) a.href = window.WHATSAPP_COMMUNITY_URL;
+  });
+  // test registrations (form not yet connected) are flagged so they're never mistaken for real ones
+  if (/[?&]test=1/.test(location.search)) {
+    var note = document.createElement("p");
+    note.className = "ty-test";
+    note.innerHTML = "<strong>Test mode:</strong> this registration was not saved, because the form isn’t connected to the Google Sheet yet.";
+    document.querySelector(".ty-main .container").prepend(note);
+  }
+</script>
+</body>
+</html>

@@ -549,3 +549,47 @@ p  { margin: 0 0 1em; }
   border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0, 74, 173, 0.15);
 }
 .reg-field.invalid .phone-row input { border-color: #d6293e; }
+
+/* =========================================================
+   Thank-you page (same layout as cisspaccelerator.com/thank-you/)
+   ========================================================= */
+.ty-page { background: #e9eaec; }
+.ty-banner { background: var(--blue); color: var(--white); text-align: center; padding: 44px 0; }
+.ty-banner h1 { font-size: clamp(1.7rem, 5vw, 2.8rem); font-weight: 800; line-height: 1.25; margin: 0; }
+.ty-main { padding: 40px 0 56px; text-align: center; }
+.ty-title { color: var(--blue); font-size: clamp(1.25rem, 3vw, 1.7rem); font-weight: 800; margin-bottom: 1em; }
+.ty-photo { display: flex; justify-content: center; margin-bottom: 24px; }
+.ty-headshot { --d: 190px; --ring: 7px; }
+.ty-whatsapp {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  max-width: 760px; margin: 0 auto 40px; padding: 18px 22px; border-radius: 20px;
+  background: #01ac01; color: var(--white); text-decoration: none;
+  box-shadow: 0 14px 30px -14px rgba(0, 100, 0, 0.7); transition: transform 0.15s, background 0.15s;
+}
+.ty-whatsapp:hover { background: #019401; transform: translateY(-2px); }
+.ty-whatsapp-main { font-size: clamp(1.05rem, 2.6vw, 1.3rem); font-weight: 800; }
+.ty-whatsapp-sub { font-size: 0.82rem; opacity: 0.95; }
+.ty-steps { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 980px; margin: 0 auto; }
+.ty-step {
+  background: var(--white); border-radius: 25px; padding: 26px 24px; box-shadow: 0 0 6px rgba(0, 0, 0, 0.35);
+  display: flex; flex-direction: column; align-items: center;
+}
+.ty-step-badge {
+  display: block; width: 55%; background: var(--blue); color: var(--white); border-radius: 15px;
+  font-size: 1.4rem; font-weight: 800; padding: 8px 0;
+}
+.ty-step-icon { width: 96px; height: 96px; margin: 22px auto 14px; }
+.ty-step-icon .fill-blue { fill: var(--blue); }
+.ty-step-icon .fill-gold { fill: var(--gold); }
+.ty-step-icon .fill-green { fill: #25a244; }
+.ty-step-icon .line-white { fill: none; stroke: var(--white); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.ty-step-icon .line-blue { fill: none; stroke: var(--blue-darker); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ty-step h3 { color: var(--blue); font-size: clamp(1.2rem, 2.6vw, 1.55rem); font-weight: 800; margin-bottom: 0.4em; }
+.ty-step p { color: #000; font-size: 1.1rem; margin: 0; }
+.ty-test { background: #fff4d6; color: #6b4e00; border-radius: 10px; padding: 10px 14px; margin: 0 auto 20px; max-width: 760px; font-size: 0.9rem; }
+@media (max-width: 760px) {
+  .ty-steps { grid-template-columns: 1fr; }
+  .ty-headshot { --d: 150px; --ring: 6px; }
+  .ty-step-badge { width: 72%; font-size: 1.25rem; }
+  .ty-step p { font-size: 1rem; }
+}

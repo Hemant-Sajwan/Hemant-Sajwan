@@ -138,6 +138,10 @@
 
     function done(testMode) {
       if (payment) { window.location.href = payment; return; }   // paid page: go to payment
+      if (window.THANK_YOU_URL) {                                  // free page: go to the thank-you page
+        window.location.href = window.THANK_YOU_URL + (testMode ? "?test=1" : "");
+        return;
+      }
       modal.querySelector("[data-name]").textContent = name;
       modal.querySelector(".reg-test").hidden = !testMode;
       form.reset();
