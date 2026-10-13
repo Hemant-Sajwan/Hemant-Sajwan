@@ -41,6 +41,10 @@ var SETTINGS = {
   // WhatsApp community link shown in the email
   WHATSAPP_LINK: "https://wa.cisspaccelerator.com/",
 
+  // Your regular WhatsApp number for queries, country code + digits only, e.g. "919876543210".
+  // Shown in the email as a tap-to-chat link. Leave "" to show only the support email.
+  SUPPORT_WHATSAPP: "",
+
   // Paid-page entries: send the confirmation email only after payment (false),
   // or straight away like free entries (true).
   EMAIL_PAID_BEFORE_PAYMENT: false,
@@ -130,6 +134,12 @@ function sendConfirmation(entry) {
       : "<em>Will be shared as we get closer to the bootcamp</em>";
     var joinText = SETTINGS.ZOOM_LINK || "Will be shared as we get closer to the bootcamp";
     var wa = SETTINGS.WHATSAPP_LINK;
+    var supportWa = String(SETTINGS.SUPPORT_WHATSAPP || "").replace(/\D/g, "");
+    var queriesHtml = "For any queries or concerns, email " +
+      '<a href="mailto:support@hemantsajwan.com">support@hemantsajwan.com</a>' +
+      (supportWa ? ' or WhatsApp me at <a href="https://wa.me/' + supportWa + '">+' + supportWa + "</a>" : "") + ".";
+    var queriesText = "For any queries or concerns, email support@hemantsajwan.com" +
+      (supportWa ? " or WhatsApp me at https://wa.me/" + supportWa : "") + ".";
     var html =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#0d1b2a;max-width:560px">' +
       p("Hi " + esc(entry.firstName) + ",") +
@@ -144,6 +154,7 @@ function sendConfirmation(entry) {
       p("Join our whatsapp community to get useful updates and resources:<br>" +
         '<a href="' + esc(wa) + '">' + esc(wa.replace(/^https?:\/\//, "")) + "</a>") +
       p("You’ll receive reminders and joining link before each session. Block your calendar so that you don't miss out.") +
+      p(queriesHtml) +
       p("And in case this email landed in your spam or promotions or junk folder, please mark it as “Not Spam/Promotion/Junk”, so you don’t miss such emails the next time.") +
       p("Get ready to:<br>✅ Simplify your CISSP strategy<br>✅ Avoid overwhelm with a structured plan<br>✅ Understand the concepts so they stick longer") +
       p("This isn’t another generic training. It’s a fast-track to getting CISSP-ready, minus the stress.") +
@@ -158,6 +169,7 @@ function sendConfirmation(entry) {
       "📬 What’s next?",
       "Join our whatsapp community to get useful updates and resources:\n" + wa,
       "You’ll receive reminders and joining link before each session. Block your calendar so that you don't miss out.",
+      queriesText,
       "And in case this email landed in your spam or promotions or junk folder, please mark it as “Not Spam/Promotion/Junk”, so you don’t miss such emails the next time.",
       "Get ready to:\n✅ Simplify your CISSP strategy\n✅ Avoid overwhelm with a structured plan\n✅ Understand the concepts so they stick longer",
       "This isn’t another generic training. It’s a fast-track to getting CISSP-ready, minus the stress.",
