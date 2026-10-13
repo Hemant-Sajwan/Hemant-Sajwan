@@ -250,6 +250,12 @@ function findPhoneNumberId() {
   else {
     var info = get(base + "/debug_token?input_token=" + encodeURIComponent(token));
     if (info.error) { console.log("Meta replied: " + info.error.message); return; }
+    var scopes = (info.data && info.data.scopes) || [];
+    console.log("Token permissions: " + (scopes.join(", ") || "none"));
+    if (scopes.indexOf("whatsapp_business_messaging") === -1) {
+      console.log("The token is missing whatsapp_business_messaging. Make a new token and tick it (step 4C).");
+      return;
+    }
     ((info.data && info.data.granular_scopes) || []).forEach(function (sc) {
       if (/^whatsapp_business_/.test(sc.permission)) (sc.target_ids || []).forEach(function (id) {
         if (accounts.indexOf(id) === -1) accounts.push(id);
@@ -257,12 +263,18 @@ function findPhoneNumberId() {
     });
   }
   if (!accounts.length) {
-    console.log("The token has no WhatsApp account. Check step 4B (assign the WhatsApp account to the system user) and make a new token.");
+    console.log("Meta didn't say which WhatsApp account this token is for. Add your WhatsApp account ID as the script property " +
+      "WHATSAPP_BUSINESS_ACCOUNT_ID (Business settings → Accounts → WhatsApp accounts → your account → ID), then run this again.");
     return;
   }
   accounts.forEach(function (acc) {
     var list = get(base + "/" + acc + "/phone_numbers?fields=id,display_phone_number,verified_name");
-    if (list.error) { console.log("WhatsApp account " + acc + ": " + list.error.message); return; }
+    if (list.error) {
+      console.log("WhatsApp account " + acc + ": " + list.error.message +
+        " (check that this WhatsApp account is assigned to the system user with full control, step 4B, then make a new token)");
+      return;
+    }
+    if (!(list.data || []).length) console.log("WhatsApp account " + acc + " has no phone numbers. Is this the right account ID?");
     (list.data || []).forEach(function (n) {
       console.log(n.display_phone_number + " (" + n.verified_name + ")  →  Phone number ID: " + n.id);
     });
