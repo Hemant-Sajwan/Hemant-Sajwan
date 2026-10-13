@@ -60,7 +60,7 @@ var SETTINGS = {
   // Choices: "firstName", "dates", "times", "mode", "email"
   WHATSAPP_PARAMS: ["firstName", "dates", "times"],
   // Your own WhatsApp number (with country code) for the testWhatsApp function, e.g. "+91 98765 43210"
-  WHATSAPP_TEST_NUMBER: "",
+  WHATSAPP_TEST_NUMBER: "919871157549",
   GRAPH_API_VERSION: "v23.0"
 };
 // =======================================================================
