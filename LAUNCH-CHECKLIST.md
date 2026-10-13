@@ -12,9 +12,9 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
    Plan: a timed trigger in the same Google Apps Script that emails everyone registered for the next batch.
 
 ## Must be done before going live
-2. [ ] **Connect the free form to Google Sheets.** Follow `google-apps-script/SETUP.md`, then put the
+2. [x] **Connect the free form to Google Sheets.** Follow `google-apps-script/SETUP.md`, then put the
    web-app link in `FORM_ENDPOINT` at the top of `bootcamp-free/index.html`. Until then the form is in test mode.
-3. [ ] **Confirmation email sender:** Google Workspace. The script sends from `support@hemantsajwan.com`
+3. [x] **Confirmation email sender:** Google Workspace. The script sends from `support@hemantsajwan.com`
    (`FROM_ADDRESS` setting) if that is the sheet owner or a "Send mail as" alias.
 4. [ ] **Paid registrations to the sheet + confirmation email after payment.** Plan: the script checks Razorpay
    every ~10 minutes using Razorpay API keys (stored in the script's private settings, never in the repo).
@@ -22,9 +22,16 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
 6. [ ] **Thank-you page Step 1 / Step 2 text** promises an email and a WhatsApp message. Make sure both are
    really sent (items 2–4 and 8), or soften the wording.
 7. [ ] **Real dates and times** in the `EDIT EACH WEEK` block at the top of both landing pages.
-8. [ ] **WhatsApp confirmation** via Meta WhatsApp Cloud API (Hemant's own WhatsApp Business number,
+8. [x] **WhatsApp confirmation** via Meta WhatsApp Cloud API (Hemant's own WhatsApp Business number,
    approved template). Needs access token, phone number ID, template name.
-9. [ ] **Merge the draft branch into `main`** (via pull request) so GitHub Pages publishes the pages.
+   Done for free registrations (template `bootcamp_registration`). Replies: Pabbly Connect workflow
+   "WhatsApp replies" saves each reply to the *WhatsApp replies* tab and sends a free auto-reply.
+9. [ ] **Before cancelling the whitelabel:** add Hemant's own payment method in WhatsApp Manager →
+   Payment settings, then remove the whitelabel's access to the WhatsApp account (don't delete or
+   re-register the number).
+10. [ ] **Business portfolio admins:** former ad-agency people still have full control. Remove them
+   (needs one of them to approve), and add a trusted second admin.
+11. [ ] **Merge the draft branch into `main`** (via pull request) so GitHub Pages publishes the pages.
 
 ## Open questions / nice to have
 - [x] Facebook Pixel + Google Tag Manager on all three pages (same IDs as the live site).
