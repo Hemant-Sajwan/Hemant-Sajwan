@@ -230,6 +230,46 @@ function sendWhatsApp(entry) {
 }
 
 /**
+ * Run this after adding WHATSAPP_TOKEN in Project Settings → Script Properties
+ * (select "findPhoneNumberId" at the top, click Run). It lists the WhatsApp numbers
+ * the token can use, with their Phone number IDs. Sends nothing.
+ */
+function findPhoneNumberId() {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty("WHATSAPP_TOKEN");
+  if (!token) { console.log("Add WHATSAPP_TOKEN in Project Settings → Script Properties first."); return; }
+  var base = "https://graph.facebook.com/" + SETTINGS.GRAPH_API_VERSION;
+  var get = function (url) {
+    var res = UrlFetchApp.fetch(url, { headers: { Authorization: "Bearer " + token }, muteHttpExceptions: true });
+    return JSON.parse(res.getContentText() || "{}");
+  };
+  // which WhatsApp accounts the token was given (or WHATSAPP_BUSINESS_ACCOUNT_ID, if set)
+  var accounts = [];
+  var own = props.getProperty("WHATSAPP_BUSINESS_ACCOUNT_ID");
+  if (own) accounts.push(own);
+  else {
+    var info = get(base + "/debug_token?input_token=" + encodeURIComponent(token));
+    if (info.error) { console.log("Meta replied: " + info.error.message); return; }
+    ((info.data && info.data.granular_scopes) || []).forEach(function (sc) {
+      if (/^whatsapp_business_/.test(sc.permission)) (sc.target_ids || []).forEach(function (id) {
+        if (accounts.indexOf(id) === -1) accounts.push(id);
+      });
+    });
+  }
+  if (!accounts.length) {
+    console.log("The token has no WhatsApp account. Check step 4B (assign the WhatsApp account to the system user) and make a new token.");
+    return;
+  }
+  accounts.forEach(function (acc) {
+    var list = get(base + "/" + acc + "/phone_numbers?fields=id,display_phone_number,verified_name");
+    if (list.error) { console.log("WhatsApp account " + acc + ": " + list.error.message); return; }
+    (list.data || []).forEach(function (n) {
+      console.log(n.display_phone_number + " (" + n.verified_name + ")  →  Phone number ID: " + n.id);
+    });
+  });
+}
+
+/**
  * Run this from the editor after adding the WhatsApp keys (select "testWhatsApp", click Run).
  * Sends the template to WHATSAPP_TEST_NUMBER only, with sample details, and shows Meta's answer.
  */

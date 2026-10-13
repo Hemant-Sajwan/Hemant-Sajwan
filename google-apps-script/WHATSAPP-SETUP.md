@@ -48,9 +48,8 @@ Otherwise create one: **Message templates → Create template**
    - **WhatsApp accounts:** your WhatsApp account, with full control.
 3. Click **Generate new token**. Pick your app, set the expiry to **Never**, and tick
    `whatsapp_business_messaging` and `whatsapp_business_management`. **Copy the token**. It is shown only once.
-4. **Phone number ID:** in your app, open **WhatsApp → API Setup**. Choose your number in the
-   **From** list; the **Phone number ID** (a long number) appears under it.
-   It is *not* your phone number.
+4. **Phone number ID:** after adding `WHATSAPP_TOKEN` (step 5), run **findPhoneNumberId** in the
+   script. The log lists your number with its Phone number ID (a long number, *not* your phone number).
 
 ## 5. Put the keys in the script (privately)
 1. In your spreadsheet, open **Extensions → Apps Script** and click **⚙️ Project Settings** on the left.
