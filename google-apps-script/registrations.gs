@@ -282,6 +282,30 @@ function findPhoneNumberId() {
 }
 
 /**
+ * Run this once when setting up the reply notifications (Pabbly): select
+ * "connectRepliesToApp" at the top and click Run. It tells your WhatsApp account to send
+ * incoming messages to the "Bootcamp sheet" app, whose webhook then forwards them to Pabbly.
+ * Needs WHATSAPP_TOKEN and WHATSAPP_BUSINESS_ACCOUNT_ID in Script Properties. Sends no message.
+ * Other connected apps (e.g. a whitelabel) keep receiving messages as before.
+ */
+function connectRepliesToApp() {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty("WHATSAPP_TOKEN");
+  var waba = props.getProperty("WHATSAPP_BUSINESS_ACCOUNT_ID");
+  if (!token || !waba) { console.log("Add WHATSAPP_TOKEN and WHATSAPP_BUSINESS_ACCOUNT_ID in Script Properties first."); return; }
+  var url = "https://graph.facebook.com/" + SETTINGS.GRAPH_API_VERSION + "/" + encodeURIComponent(waba) + "/subscribed_apps";
+  var opts = { headers: { Authorization: "Bearer " + token }, muteHttpExceptions: true };
+  var res = UrlFetchApp.fetch(url, Object.assign({ method: "post" }, opts));
+  console.log(res.getResponseCode() < 300 ? "Done. Meta replied: " + res.getContentText()
+                                          : "Didn't work. Meta replied: " + res.getContentText());
+  var list = JSON.parse(UrlFetchApp.fetch(url, opts).getContentText() || "{}");
+  ((list && list.data) || []).forEach(function (a) {
+    var app = a.whatsapp_business_api_data || {};
+    console.log("Connected app: " + (app.name || "?") + " (" + (app.id || "?") + ")");
+  });
+}
+
+/**
  * Run this from the editor after adding the WhatsApp keys (select "testWhatsApp", click Run).
  * Sends the template to WHATSAPP_TEST_NUMBER only, with sample details, and shows Meta's answer.
  */
