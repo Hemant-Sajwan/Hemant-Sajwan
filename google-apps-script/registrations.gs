@@ -43,7 +43,7 @@ var SETTINGS = {
 
   // Your regular WhatsApp number for queries, country code + digits only, e.g. "919876543210".
   // Shown in the email as a tap-to-chat link. Leave "" to show only the support email.
-  SUPPORT_WHATSAPP: "",
+  SUPPORT_WHATSAPP: "919871157549",
 
   // Paid-page entries: send the confirmation email only after payment (false),
   // or straight away like free entries (true).
