@@ -22,8 +22,8 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
    classic workflow "06_2DAY_PAID_BOOTCAMP_FLOW (whitelabel)" OFF, so buyers get one confirmation, not two.
    **Each week:** update `PAID_BATCH` in the script together with the paid page's dates.
 5. [ ] **Razorpay redirect after payment:** `https://hemant-sajwan.github.io/Hemant-Sajwan/thank-you/`
-6. [ ] **Thank-you page Step 1 / Step 2 text** promises an email and a WhatsApp message. Make sure both are
-   really sent (items 2–4 and 8), or soften the wording.
+6. [x] **Thank-you page Step 1 / Step 2 text** promises an email and a WhatsApp message. Both are now sent
+   for free and paid registrations. (Open: "the 121 WhatsApp message" wording, copied from the old page.)
 7. [ ] **Real dates and times** in the `EDIT EACH WEEK` block at the top of both landing pages.
 8. [x] **WhatsApp confirmation** via Meta WhatsApp Cloud API (Hemant's own WhatsApp Business number,
    approved template). Needs access token, phone number ID, template name.
