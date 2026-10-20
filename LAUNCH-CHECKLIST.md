@@ -16,9 +16,11 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
    web-app link in `FORM_ENDPOINT` at the top of `bootcamp-free/index.html`. Until then the form is in test mode.
 3. [x] **Confirmation email sender:** Google Workspace. The script sends from `support@hemantsajwan.com`
    (`FROM_ADDRESS` setting) if that is the sheet owner or a "Send mail as" alias.
-4. [ ] **Paid registrations to the sheet + confirmation email and WhatsApp after payment.** Built: Razorpay →
-   existing Pabbly workflow → script (`google-apps-script/PAID-SETUP.md`). At launch: remove the test filter and
-   the whitelabel step from that Pabbly workflow, so buyers get one confirmation.
+4. [x] **Paid registrations to the sheet + confirmation email and WhatsApp after payment.** Done and tested:
+   Razorpay → Pabbly workflow "Razorpay → bootcamp sheet" (New Builder) → script (`google-apps-script/PAID-SETUP.md`).
+   **At launch:** in that workflow delete the Filter step (email = hemantishere@rediffmail.com), and switch the old
+   classic workflow "06_2DAY_PAID_BOOTCAMP_FLOW (whitelabel)" OFF, so buyers get one confirmation, not two.
+   **Each week:** update `PAID_BATCH` in the script together with the paid page's dates.
 5. [ ] **Razorpay redirect after payment:** `https://hemant-sajwan.github.io/Hemant-Sajwan/thank-you/`
 6. [ ] **Thank-you page Step 1 / Step 2 text** promises an email and a WhatsApp message. Make sure both are
    really sent (items 2–4 and 8), or soften the wording.
