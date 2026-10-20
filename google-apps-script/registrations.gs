@@ -14,6 +14,10 @@
  *      paid-page entries haven't paid yet, so they are marked "Payment pending").
  *   3. Sends a WhatsApp confirmation (approved template) through the Meta WhatsApp
  *      Cloud API, once the keys are added (see WHATSAPP-SETUP.md). Same rule as the email.
+ *
+ * Paid registrations: Razorpay notifies Pabbly the moment a payment succeeds, and Pabbly
+ * passes the buyer's details here (see PAID-SETUP.md). The row is marked PAID and the
+ * same email and WhatsApp confirmations go out.
  */
 
 // ================== SETTINGS – edit these if you like ==================
@@ -45,6 +49,17 @@ var SETTINGS = {
   // Shown in the email as a tap-to-chat link. Leave "" to show only the support email.
   SUPPORT_WHATSAPP: "919871157549",
 
+  // ---- Paid registrations (Razorpay → Pabbly → this script) ----
+  // The batch paid buyers are booked into. EDIT EACH WEEK, together with the paid page.
+  PAID_BATCH: {
+    tab: "evening-bootcamp",
+    dates: "14th & 15th Oct 2026 (Wed–Thu)",
+    times: "7:30 PM IST (India)",
+    mode: "Online (English)"
+  },
+  // Pabbly must send this secret with every payment (stored in Script Properties as PAID_SECRET),
+  // so nobody else can add fake "paid" rows.
+
   // Paid-page entries: send the confirmation email only after payment (false),
   // or straight away like free entries (true).
   EMAIL_PAID_BEFORE_PAYMENT: false,
@@ -67,15 +82,21 @@ var SETTINGS = {
 
 // Column order for the tabs. Each value is written under the column with the same heading,
 // so you can also drag columns around in the sheet yourself (keep the headings unchanged).
-var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Timestamp", "First name", "Email", "Phone",
-               "Country", "Challenges", "Page", "Status"];
+var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Paid/Free?", "Timestamp", "First name", "Email", "Phone",
+               "Country", "Challenges", "Page", "Status", "Payment ID"];
 
 /** Receives each registration from the website form. */
 function doPost(e) {
   var p = (e && e.parameter) || {};
+  // Pabbly may send JSON instead of form fields
+  if (e && e.postData && /json/i.test(e.postData.type || "")) {
+    try { var body = JSON.parse(e.postData.contents || "{}"); Object.keys(body).forEach(function (k) { p[k] = String(body[k]); }); } catch (err) {}
+  }
 
   // spam trap: people never fill this hidden field, bots usually do
   if (p.website) return reply({ ok: true });
+
+  if (p.source === "razorpay") return reply(handlePaid(p));
 
   var entry = {
     firstName: clean(p.first_name, 60),
@@ -109,7 +130,7 @@ function doPost(e) {
   lock.waitLock(20000);   // one write at a time, so rows never overlap
   try {
     appendByHeading(getTab(tabFor(entry.batch)), {
-      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Timestamp": new Date(),
+      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "FREE", "Timestamp": new Date(),
       "First name": entry.firstName, "Email": entry.email, "Phone": entry.phone,
       "Country": entry.country, "Challenges": entry.challenges, "Page": entry.page, "Status": status
     });
@@ -117,6 +138,79 @@ function doPost(e) {
     lock.releaseLock();
   }
   return reply({ ok: true });
+}
+
+/**
+ * A paid registration passed on by Pabbly after a successful Razorpay payment.
+ * Expected fields: secret, name, email, phone, payment_id (amount optional).
+ */
+function handlePaid(p) {
+  var secret = PropertiesService.getScriptProperties().getProperty("PAID_SECRET");
+  if (!secret || p.secret !== secret) return { ok: false, error: "not allowed" };
+
+  var fullName = clean(p.name, 80);
+  var batch = SETTINGS.PAID_BATCH;
+  var entry = {
+    firstName: fullName.split(" ")[0] || fullName,   // greeting uses the first name only
+    email: clean(p.email, 120).toLowerCase(),
+    phone: clean(p.phone, 25),
+    dates: batch.dates, times: batch.times, mode: batch.mode,
+    paymentId: clean(p.payment_id, 40)
+  };
+  if (!fullName || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(entry.email) || !entry.phone) {
+    return { ok: false, error: "missing or invalid fields" };
+  }
+  if (entry.phone.charAt(0) !== "+" && /^\d{11,15}$/.test(entry.phone)) entry.phone = "+" + entry.phone;
+
+  var sh = getTab(batch.tab);
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try {
+    // the same payment can be passed on twice (retries); only the first one counts
+    if (entry.paymentId && hasValue(sh, "Payment ID", entry.paymentId)) return { ok: true, duplicate: true };
+    var row = appendByHeading(sh, {
+      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "PAID", "Timestamp": new Date(),
+      "First name": fullName, "Email": entry.email, "Phone": entry.phone,
+      "Page": "Paid bootcamp", "Status": "Paid", "Payment ID": entry.paymentId
+    });
+  } finally {
+    lock.releaseLock();
+  }
+
+  var status = "Paid";
+  if (SETTINGS.SEND_EMAIL) status += sendConfirmation(entry) ? " · email sent" : " · email NOT sent";
+  if (SETTINGS.SEND_WHATSAPP) {
+    var wa = sendWhatsApp(entry);
+    if (wa) status += wa.ok ? " · WhatsApp sent" : " · WhatsApp NOT sent";
+  }
+  setByHeading(sh, row, "Status", status);
+  return { ok: true };
+}
+
+/**
+ * Run this once (select "makePaidSecret", click Run). It creates a random secret, saves it in
+ * Script Properties as PAID_SECRET and shows it in the log so you can paste it into Pabbly.
+ * Running it again makes a NEW secret, and Pabbly must then be updated too.
+ */
+function makePaidSecret() {
+  var secret = Utilities.getUuid().replace(/-/g, "") + Utilities.getUuid().replace(/-/g, "").slice(0, 8);
+  PropertiesService.getScriptProperties().setProperty("PAID_SECRET", secret);
+  console.log("Saved. Paste this into the Pabbly step as the value of \"secret\": " + secret);
+}
+
+/**
+ * Run this from the editor to try a paid registration without paying
+ * (select "testPaidRegistration", click Run). It adds a row marked PAID to the
+ * paid batch tab, emails YOU and sends the WhatsApp to WHATSAPP_TEST_NUMBER.
+ */
+function testPaidRegistration() {
+  var props = PropertiesService.getScriptProperties();
+  if (!props.getProperty("PAID_SECRET")) { console.log("Add PAID_SECRET in Script Properties first."); return; }
+  var r = handlePaid({
+    secret: props.getProperty("PAID_SECRET"), name: "Hemant Test", email: Session.getActiveUser().getEmail(),
+    phone: SETTINGS.WHATSAPP_TEST_NUMBER || "", payment_id: "test_" + new Date().getTime()
+  });
+  console.log(r.ok ? "Done. Check the " + SETTINGS.PAID_BATCH.tab + " tab, your inbox and WhatsApp." : "Didn't work: " + r.error);
 }
 
 /** Lets you open the web-app link in a browser to check it is running. */
@@ -344,7 +438,12 @@ function setupTabs() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var old = ss.getSheetByName("Bootcamp Registrations");
   if (old && !ss.getSheetByName(SETTINGS.DEFAULT_TAB)) old.setName(SETTINGS.DEFAULT_TAB);
-  Object.keys(SETTINGS.TABS).forEach(function (k) { orderColumns(getTab(SETTINGS.TABS[k])); });
+  Object.keys(SETTINGS.TABS).forEach(function (k) {
+    var sh = getTab(SETTINGS.TABS[k]);
+    addMissingHeadings(sh);
+    orderColumns(sh);
+    fillBlank(sh, "Paid/Free?", "FREE");   // rows from before this column existed were free sign-ups
+  });
   console.log("Tabs ready: " + Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).join(", "));
 }
 
@@ -377,6 +476,34 @@ function appendByHeading(sh, values) {
     }
   });
   sh.appendRow(head.map(function (h) { return h in values ? safeCell(values[h]) : ""; }));
+  return sh.getLastRow();
+}
+function addMissingHeadings(sh) {
+  var head = headings(sh);
+  COLUMNS.forEach(function (h) {
+    if (head.indexOf(h) === -1) {
+      head.push(h);
+      sh.getRange(1, head.length).setValue(h).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
+    }
+  });
+}
+function setByHeading(sh, row, heading, value) {
+  var col = headings(sh).indexOf(heading) + 1;
+  if (col > 0) sh.getRange(row, col).setValue(safeCell(value));
+}
+function hasValue(sh, heading, value) {
+  var col = headings(sh).indexOf(heading) + 1;
+  var last = sh.getLastRow();
+  if (col < 1 || last < 2) return false;
+  return sh.getRange(2, col, last - 1, 1).getValues().some(function (r) { return String(r[0]) === value; });
+}
+// puts value into every empty cell of that column on rows that have data
+function fillBlank(sh, heading, value) {
+  var col = headings(sh).indexOf(heading) + 1;
+  var last = sh.getLastRow();
+  if (col < 1 || last < 2) return;
+  var range = sh.getRange(2, col, last - 1, 1);
+  range.setValues(range.getValues().map(function (r) { return [r[0] === "" ? value : r[0]]; }));
 }
 // Moves columns (with their data) so the headings follow the COLUMNS order.
 function orderColumns(sh) {
