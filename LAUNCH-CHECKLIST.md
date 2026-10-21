@@ -5,11 +5,12 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
 
 > **Note for whoever works on this next (including Claude in a new session):**
 > before the pages go live, check every unticked item below with Hemant,
-> and **raise item 1 (reminder emails) even if he doesn't mention it.** He asked to be reminded.
+> Item 1 (reminder emails) is built; it still needs the one-time setup above.
 
 ## Must discuss before going live
-1. [ ] **Reminder emails** ("starts tomorrow", "starts in 1 hour"). Hemant wants these; not built yet.
-   Plan: a timed trigger in the same Google Apps Script that emails everyone registered for the next batch.
+1. [x] **Reminder & follow-up emails (2–19).** Built: `google-apps-script/reminders.gs` + `emails.gs`
+   (`REMINDERS-SETUP.md`). Before launch: paste the three script files, run setupReminders, fill in the
+   Settings tab, check with showSchedule / previewAllEmails, and publish a new version.
 
 ## Must be done before going live
 2. [x] **Connect the free form to Google Sheets.** Follow `google-apps-script/SETUP.md`, then put the

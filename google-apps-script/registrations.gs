@@ -18,6 +18,8 @@
  * Paid registrations: Razorpay notifies Pabbly the moment a payment succeeds, and Pabbly
  * passes the buyer's details here (see PAID-SETUP.md). The row is marked PAID and the
  * same email and WhatsApp confirmations go out.
+ *
+ * Reminder and follow-up emails (2–19): see reminders.gs and emails.gs (REMINDERS-SETUP.md).
  */
 
 // ================== SETTINGS – edit these if you like ==================
@@ -50,13 +52,8 @@ var SETTINGS = {
   SUPPORT_WHATSAPP: "919871157549",
 
   // ---- Paid registrations (Razorpay → Pabbly → this script) ----
-  // The batch paid buyers are booked into. EDIT EACH WEEK, together with the paid page.
-  PAID_BATCH: {
-    tab: "evening-bootcamp",
-    dates: "14th & 15th Oct 2026 (Wed–Thu)",
-    times: "7:30 PM IST (India)",
-    mode: "Online (English)"
-  },
+  // Which batch paid buyers are booked into: its dates and time come from that row of the Settings tab.
+  PAID_BATCH_KEY: "evening",
   // Pabbly must send this secret with every payment (stored in Script Properties as PAID_SECRET),
   // so nobody else can add fake "paid" rows.
 
@@ -83,7 +80,7 @@ var SETTINGS = {
 // Column order for the tabs. Each value is written under the column with the same heading,
 // so you can also drag columns around in the sheet yourself (keep the headings unchanged).
 var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Paid/Free?", "Timestamp", "First name", "Email", "Phone",
-               "Country", "Challenges", "Page", "Status", "Payment ID"];
+               "Country", "Challenges", "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID"];
 
 /** Receives each registration from the website form. */
 function doPost(e) {
@@ -116,28 +113,49 @@ function doPost(e) {
 
   var isPaid = /paid/i.test(entry.page);
   var status = isPaid ? "Payment pending" : "Registered";
+  var emailed = false;
 
   // send the email first so its result can be recorded in the row
   if (SETTINGS.SEND_EMAIL && (!isPaid || SETTINGS.EMAIL_PAID_BEFORE_PAYMENT)) {
-    status += sendConfirmation(entry) ? " · email sent" : " · email NOT sent";
+    emailed = sendConfirmation(entry);
+    status += emailed ? " · email sent" : " · email NOT sent";
   }
   if (SETTINGS.SEND_WHATSAPP && (!isPaid || SETTINGS.EMAIL_PAID_BEFORE_PAYMENT)) {
     var wa = sendWhatsApp(entry);
     if (wa) status += wa.ok ? " · WhatsApp sent" : " · WhatsApp NOT sent";   // nothing added while not set up
   }
 
+  var ts = new Date();
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);   // one write at a time, so rows never overlap
   try {
     appendByHeading(getTab(tabFor(entry.batch)), {
-      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "FREE", "Timestamp": new Date(),
+      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "FREE", "Timestamp": ts,
       "First name": entry.firstName, "Email": entry.email, "Phone": entry.phone,
-      "Country": entry.country, "Challenges": entry.challenges, "Page": entry.page, "Status": status
+      "Country": entry.country, "Challenges": entry.challenges, "Page": entry.page, "Status": status,
+      "Emails sent": emailed ? "1" : ""
     });
   } finally {
     lock.releaseLock();
   }
+  warnIfDatesDiffer(entry.batch, entry.dates);
+  onNewRegistration(ts);      // books email 2 (1 hour after registering), see reminders.gs
   return reply({ ok: true });
+}
+
+/** Tells you once if a page's dates don't match its row in the Settings tab (then reminders wouldn't reach those people). */
+function warnIfDatesDiffer(batchKey, dates) {
+  try {
+    var b = readBatches().filter(function (x) { return x.key === batchKey; })[0];
+    if (!b || normDates(b.dates) === normDates(dates)) return;
+    var key = "DATES_WARNED|" + batchKey + "|" + normDates(dates);
+    var props = PropertiesService.getScriptProperties();
+    if (props.getProperty(key)) return;
+    props.setProperty(key, "1");
+    notifyAdmin("Dates on the page don't match the Settings tab",
+      "A registration for the " + batchKey + " batch came in with the dates \"" + dates + "\", but the Settings tab says \"" + b.dates +
+      "\".\n\nPeople registered with different dates won't get the reminder emails. Make the page's EDIT EACH WEEK block and the Settings tab match exactly.");
+  } catch (err) { console.error(err); }
 }
 
 /**
@@ -149,12 +167,16 @@ function handlePaid(p) {
   if (!secret || p.secret !== secret) return { ok: false, error: "not allowed" };
 
   var fullName = clean(p.name, 80);
-  var batch = SETTINGS.PAID_BATCH;
+  var b = readBatches().filter(function (x) { return x.key === SETTINGS.PAID_BATCH_KEY; })[0];
+  if (!b) notifyAdmin("Paid registration: no Settings row for the " + SETTINGS.PAID_BATCH_KEY + " batch",
+    "A payment came in from " + fullName + " <" + p.email + "> but the Settings tab has no " + SETTINGS.PAID_BATCH_KEY +
+    " row with dates and a Day 1 start, so the row has no bootcamp dates. Fill in the Settings tab and add the dates to that row.");
+  var batch = b ? { tab: b.tab, dates: b.dates, times: b.time } : { tab: tabFor(SETTINGS.PAID_BATCH_KEY), dates: "", times: "" };
   var entry = {
     firstName: fullName.split(" ")[0] || fullName,   // greeting uses the first name only
     email: clean(p.email, 120).toLowerCase(),
     phone: clean(p.phone, 25),
-    dates: batch.dates, times: batch.times, mode: batch.mode,
+    dates: batch.dates, times: batch.times, mode: "Online (English)",
     paymentId: clean(p.payment_id, 40)
   };
   if (!fullName || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(entry.email) || !entry.phone) {
@@ -163,13 +185,14 @@ function handlePaid(p) {
   if (entry.phone.charAt(0) !== "+" && /^\d{11,15}$/.test(entry.phone)) entry.phone = "+" + entry.phone;
 
   var sh = getTab(batch.tab);
+  var ts = new Date();
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     // the same payment can be passed on twice (retries); only the first one counts
     if (entry.paymentId && hasValue(sh, "Payment ID", entry.paymentId)) return { ok: true, duplicate: true };
     var row = appendByHeading(sh, {
-      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "PAID", "Timestamp": new Date(),
+      "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "PAID", "Timestamp": ts,
       "First name": fullName, "Email": entry.email, "Phone": entry.phone,
       "Page": "Paid bootcamp", "Status": "Paid", "Payment ID": entry.paymentId
     });
@@ -178,12 +201,15 @@ function handlePaid(p) {
   }
 
   var status = "Paid";
-  if (SETTINGS.SEND_EMAIL) status += sendConfirmation(entry) ? " · email sent" : " · email NOT sent";
+  var emailed = SETTINGS.SEND_EMAIL && sendConfirmation(entry);
+  if (SETTINGS.SEND_EMAIL) status += emailed ? " · email sent" : " · email NOT sent";
   if (SETTINGS.SEND_WHATSAPP) {
     var wa = sendWhatsApp(entry);
     if (wa) status += wa.ok ? " · WhatsApp sent" : " · WhatsApp NOT sent";
   }
   setByHeading(sh, row, "Status", status);
+  if (emailed) setByHeading(sh, row, "Emails sent", "1");
+  onNewRegistration(ts);
   return { ok: true };
 }
 
@@ -210,11 +236,12 @@ function testPaidRegistration() {
     secret: props.getProperty("PAID_SECRET"), name: "Hemant Test", email: Session.getActiveUser().getEmail(),
     phone: SETTINGS.WHATSAPP_TEST_NUMBER || "", payment_id: "test_" + new Date().getTime()
   });
-  console.log(r.ok ? "Done. Check the " + SETTINGS.PAID_BATCH.tab + " tab, your inbox and WhatsApp." : "Didn't work: " + r.error);
+  console.log(r.ok ? "Done. Check the " + tabFor(SETTINGS.PAID_BATCH_KEY) + " tab, your inbox and WhatsApp." : "Didn't work: " + r.error);
 }
 
-/** Lets you open the web-app link in a browser to check it is running. */
-function doGet() {
+/** Opening the web-app link: the unsubscribe link (see reminders.gs), otherwise a "running" check. */
+function doGet(e) {
+  if (e && e.parameter && e.parameter.unsub) return handleUnsubscribe(e.parameter);
   return ContentService.createTextOutput("Bootcamp registration receiver is running.");
 }
 
@@ -269,15 +296,7 @@ function sendConfirmation(entry) {
       "This isn’t another generic training. It’s a fast-track to getting CISSP-ready, minus the stress.",
       "Excited to see you in the sessions,\n\nHemant"
     ].join("\n\n");
-    var opts = { name: SETTINGS.FROM_NAME, replyTo: SETTINGS.REPLY_TO, htmlBody: html };
-    var owner = String(Session.getEffectiveUser().getEmail() || "").toLowerCase();
-    var from = String(SETTINGS.FROM_ADDRESS || "").toLowerCase();
-    if (from && from !== owner && GmailApp.getAliases().map(function (a) { return a.toLowerCase(); }).indexOf(from) !== -1) {
-      opts.from = SETTINGS.FROM_ADDRESS;              // send as the support@ alias
-      GmailApp.sendEmail(entry.email, SETTINGS.EMAIL_SUBJECT, plain, opts);
-    } else {
-      MailApp.sendEmail(entry.email, SETTINGS.EMAIL_SUBJECT, plain, opts);   // owner's own address
-    }
+    deliver(entry.email, SETTINGS.EMAIL_SUBJECT, plain, html);   // from support@ (see reminders.gs)
     return true;
   } catch (err) {
     console.error("Email failed: " + err);

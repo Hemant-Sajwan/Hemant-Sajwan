@@ -3,7 +3,7 @@
 When someone pays on the Razorpay page, Razorpay tells Pabbly straight away. Pabbly passes the
 buyer's name, email, phone and payment ID to the Google Sheet script, which:
 
-1. adds a row to the paid batch tab (`PAID_BATCH.tab`, now **evening-bootcamp**) with **Paid/Free? = PAID**,
+1. adds a row to the paid batch tab (the `PAID_BATCH_KEY` row of the Settings tab, now **evening**) with **Paid/Free? = PAID**,
 2. sends the confirmation email, and
 3. sends the WhatsApp confirmation.
 
@@ -38,5 +38,5 @@ so only your test payments use the new flow. **At launch:** delete that filter a
 whitelabel step, so buyers get one confirmation, not two.
 
 ## 3. Each week
-Update `PAID_BATCH` (dates, time) in the script **and** the `EDIT EACH WEEK` block on the paid page.
-Then publish a new version (step 1.5).
+The paid batch's dates and time come from its row in the **Settings** tab (see `REMINDERS-SETUP.md`).
+Update that row together with the paid page's `EDIT EACH WEEK` block.
