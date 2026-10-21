@@ -117,6 +117,10 @@
 .v2 .split { display: grid; grid-template-columns: 1fr 1fr; gap: 72px; align-items: center; }
 .v2 .split.reverse > :first-child { order: 2; }
 .v2 .split + .narrow { margin-top: 2.4em; }
+/* show this illustration a little larger on wide screens (grows towards the page edge, away from the text) */
+@media (min-width: 1100px) {
+  .v2 .art-zoom img { max-height: none; transform: scale(1.16); transform-origin: right center; }
+}
 .v2 .art { margin: 0; }
 .v2 .art img { width: 100%; height: auto; max-height: 380px; object-fit: contain; }
 
