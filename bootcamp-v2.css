@@ -34,11 +34,11 @@
 /* small uppercase label above a headline, with a short gold line */
 .v2 .eyebrow {
   display: flex; align-items: center; gap: 12px; margin: 0 0 18px;
-  font-family: var(--head); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase;
+  font-family: var(--head); font-weight: 700; font-size: 0.92rem; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--blue);
 }
 .v2 .eyebrow::before { content: ""; width: 32px; height: 2px; background: var(--gold); flex: 0 0 auto; }
-.v2 .center .eyebrow, .v2 .band .eyebrow { justify-content: center; }
+.v2 .center .eyebrow, .v2 .band .eyebrow, .v2 .center-eyebrow { justify-content: center; }
 
 /* ---------- buttons: square, navy on light backgrounds, gold on navy ---------- */
 .v2 .cta {
@@ -100,14 +100,14 @@
 .v2 .gold-line { box-shadow: inset 0 -0.14em 0 var(--gold); padding-bottom: 0.04em; }   /* thin gold underline */
 .v2 .band .hero-desc { color: rgba(255, 255, 255, 0.86); opacity: 1; margin-bottom: 2.6em; }
 .v2 .video { border: 0; border-radius: var(--radius); box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.7); }
-.v2 .mentor-strip-label { color: var(--gold); font-family: var(--head); font-weight: 700; letter-spacing: 0.16em; }
+.v2 .mentor-strip-label { color: var(--gold); font-family: var(--head); font-weight: 700; letter-spacing: 0.14em; font-size: 0.86rem; }
 .v2 .mentor-strip-text strong { font-family: var(--head); font-weight: 700; }
 .v2 .event-panel {
   background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: var(--radius);
   box-shadow: none;
 }
 .v2 .event-icon { border-radius: 4px; background: transparent; border: 1px solid rgba(255, 212, 1, 0.45); }
-.v2 .event-k { font-family: var(--head); font-weight: 700; letter-spacing: 0.14em; font-size: 0.78rem; }
+.v2 .event-k { font-family: var(--head); font-weight: 700; letter-spacing: 0.12em; font-size: 0.88rem; }
 .v2 .event-v { font-family: var(--head); font-weight: 700; }
 .v2 .band .cta-meta { color: rgba(255, 255, 255, 0.8); }
 
@@ -164,4 +164,71 @@
   .v2 .brand { font-size: 0.82rem; letter-spacing: 0.16em; }
   .v2 .topbar .container { height: 60px; }
   .v2 .punch { padding: 28px 22px; }
+}
+
+/* =========================================================
+   Rest of the page
+   ========================================================= */
+
+/* navy sections: white headings, gold label */
+.v2 .on-blue { background: var(--blue); }
+.v2 .on-blue h2, .v2 .on-blue .discover-title { color: #fff; }
+.v2 .on-blue .eyebrow { color: var(--gold); }
+.v2 .on-blue .gold-text { color: var(--gold); }
+.v2 .on-blue .cta-meta { color: rgba(255, 255, 255, 0.8); }
+.v2 .discover-title { font-size: clamp(1.9rem, 4vw, 2.6rem); }
+.v2 .discover-sub { color: rgba(255, 255, 255, 0.88); opacity: 1; }
+
+/* Day 1 / Day 2 cards */
+.v2 .day-card { border: 0; border-top: 4px solid var(--gold); border-radius: var(--radius); box-shadow: 0 28px 56px -30px rgba(0, 0, 0, 0.7); }
+.v2 .day-card header { background: var(--blue-darker); }
+.v2 .day-card h3 { font-weight: 700; }
+.v2 .day-icon { border-radius: 4px; box-shadow: none; }
+.v2 .day-badge { border-radius: 3px; font-family: var(--head); font-weight: 800; font-size: clamp(1.1rem, 2.2vw, 1.4rem); letter-spacing: 0.08em; }
+.v2 .day-topics li::before { border-radius: 3px; font-family: var(--head); font-weight: 800; background: var(--blue); color: #fff; }
+.v2 .day-topics strong { font-family: var(--head); font-weight: 700; }
+
+/* "The format is simple" boxes */
+.v2 .format div { border-radius: var(--radius); font-family: var(--head); font-weight: 700; }
+.v2 .format b { font-family: var(--head); font-weight: 800; font-size: 2.2rem; }
+.v2 .format-icon { display: block; width: 40px; height: 40px; margin: 0 auto 8px; fill: none; stroke: var(--blue); stroke-width: 3; }
+.v2 .format-icon .accent { fill: var(--gold); stroke: none; }
+
+/* "This isn't about memorizing" */
+.v2 .callout { border-radius: var(--radius); border-top: 4px solid var(--gold); box-shadow: none; border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 44px; }
+.v2 .callout h2 { color: var(--blue-darker); }
+
+/* Why learn with me */
+.v2 .mentor-photo img { border-radius: var(--radius); border-bottom: 4px solid var(--gold); }
+.v2 .mentor-photo figcaption strong { font-family: var(--head); font-weight: 700; }
+.v2 .mentor .highlight { font-family: var(--head); font-weight: 700; color: var(--blue-darker); border-left: 3px solid var(--gold); font-size: 1.25rem; }
+.v2 .mentor .goal { border-radius: var(--radius); background: var(--blue); }
+.v2 .mentor .goal strong { color: var(--gold); font-weight: 600; }
+
+/* testimonials */
+.v2 .slide img { border-radius: var(--radius); box-shadow: 0 14px 34px -24px rgba(11, 37, 81, 0.45); }
+.v2 .carousel-btn { border-radius: 3px; background: var(--blue); box-shadow: none; }
+.v2 .carousel-btn:hover { background: var(--blue-darker); }
+.v2 .carousel-dots button { border-radius: 2px; }
+.v2 .carousel-dots button[aria-selected="true"] { background: var(--blue); }
+
+/* What you get */
+.v2 .get { border-radius: var(--radius); box-shadow: none; padding: 30px; }
+.v2 .get h3 { color: var(--blue-darker); font-size: 1.2rem; }
+.v2 .get-icon { width: 46px; height: 46px; margin-bottom: 14px; fill: none; stroke: var(--blue); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.v2 .get-icon .accent { fill: var(--gold); stroke: none; }
+.v2 .get-icon .accent-line { stroke: var(--gold-dark); stroke-width: 3.2; }
+.v2 .get-wide { background: var(--blue); border-radius: var(--radius); }
+.v2 .get-wide p { font-family: var(--head); font-weight: 600; font-size: 1.2rem !important; color: #fff; }
+
+/* FAQ */
+.v2 .faq details { border-radius: var(--radius); }
+.v2 .faq details[open] { box-shadow: none; border-color: var(--blue); }
+.v2 .faq summary { font-family: var(--head); font-weight: 700; font-size: 1.05rem; }
+.v2 .faq summary::after { border-radius: 3px; background: var(--blue); color: #fff; font-family: var(--head); }
+
+@media (max-width: 860px) {
+  .v2 .callout { padding: 28px 22px; }
+  .v2 .eyebrow { font-size: 0.82rem; letter-spacing: 0.12em; }
+  .v2 .event-k { font-size: 0.8rem; }
 }
