@@ -19,7 +19,7 @@
  * passes the buyer's details here (see PAID-SETUP.md). The row is marked PAID and the
  * same email and WhatsApp confirmations go out.
  *
- * Reminder and follow-up emails (2–19): see reminders.gs and emails.gs (REMINDERS-SETUP.md).
+ * Reminder and follow-up emails (2–20): see reminders.gs and emails.gs (REMINDERS-SETUP.md).
  */
 
 // ================== SETTINGS – edit these if you like ==================

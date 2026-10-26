@@ -1,16 +1,16 @@
 # Reminder & follow-up emails: setup
 
-Emails 2–19 go out automatically at their set times (see `emails.gs` for the wording and timing).
+Emails 2–20 go out automatically at their set times (see `emails.gs` for the wording and timing).
 People only get the emails whose send time comes **after** they registered. Promotional emails
-(2–5 and 17–19) have an unsubscribe link. Reminders and replay emails always go out.
+(2–5 and 18–20) have an unsubscribe link. Reminders and replay emails always go out.
 
 The project now has **three** script files:
 
 | File | What it is |
 |---|---|
 | `registrations.gs` | registrations, confirmation email, WhatsApp, paid buyers (as before) |
-| `reminders.gs` | the timer that sends emails 2–19, the Settings tab, summaries, unsubscribe |
-| `emails.gs` | the wording and timing of emails 2–19. **Edit this one to change an email.** |
+| `reminders.gs` | the timer that sends emails 2–20, the Settings tab, summaries, unsubscribe |
+| `emails.gs` | the wording and timing of emails 2–20. **Edit this one to change an email.** |
 
 ## One-time setup (about 10 minutes)
 1. **Extensions → Apps Script.** Replace everything in the existing file (`Code.gs`) with `registrations.gs`.
@@ -21,7 +21,7 @@ The project now has **three** script files:
    This creates the **Settings** tab and the **Emails sent** / **Unsubscribed** columns, and switches on the timer.
 5. **Fill in the Settings tab** (one row per batch, see below).
 6. Run **showSchedule**. The log lists every email with its send time and books the first alarm. Check them.
-7. Optional: run **previewAllEmails**. All 18 emails go to support@ only, so you can read them.
+7. Optional: run **previewAllEmails**. All 19 emails go to support@ only, so you can read them.
 8. **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy.**
    (Needed for the unsubscribe link.)
 

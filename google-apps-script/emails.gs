@@ -16,7 +16,7 @@
  * WHEN each email goes out:
  *   anchor "registration" = after the person registered, "day1" / "day2" = the session start time.
  *   minutes: negative = before, positive = after.  (1 hour = 60, 1 day = 1440)
- * Email 1 is the confirmation, sent straight away by registrations.gs.
+ * Email 1 is the confirmation, sent straight away by registrations.gs. Emails 2–20 are below.
  */
 var EMAILS = [
   {
@@ -491,7 +491,26 @@ All the best,
 Hemant`
   },
   {
-    id: 17, anchor: "day2", minutes: 17 * 60, promo: true,
+    id: 17, anchor: "day2", minutes: 15 * 60,
+    subject: "Quick Favor — Just need your 2 mins, please!",
+    body: `Hi {first_name},
+
+Thank you again for joining the CISSP Accelerator - Domain 1 Bootcamp. I hope it gave you clarity and a strong foundation for your CISSP journey.
+
+I’d really appreciate it if you could take **2–3 minutes to share your feedback.** Your thoughts will help me improve future sessions and guide others who are considering joining.
+
+**👉 [Click here for the feedback link](https://forms.gle/eYXeZAdro39YZFSy9)**
+
+Feel free to write as much or as little as you like. I read every single response personally.
+
+Thanks in advance!
+
+Warm regards,
+
+Hemant`
+  },
+  {
+    id: 18, anchor: "day2", minutes: 17 * 60, promo: true,
     subject: "What comes AFTER Domain 1?",
     body: `Hi {first_name},
 
@@ -537,7 +556,7 @@ Best,
 Hemant`
   },
   {
-    id: 18, anchor: "day2", minutes: 41 * 60, promo: true,
+    id: 19, anchor: "day2", minutes: 41 * 60, promo: true,
     subject: "Speed. Structure. Support. Or the long road alone.",
     body: `Hi {first_name},
 
@@ -589,7 +608,7 @@ The other is guided - and it leads to results.
 - Hemant`
   },
   {
-    id: 19, anchor: "day2", minutes: 65 * 60, promo: true,
+    id: 20, anchor: "day2", minutes: 65 * 60, promo: true,
     subject: "If you’re still on the fence, read this.",
     body: `Hi {first_name},
 

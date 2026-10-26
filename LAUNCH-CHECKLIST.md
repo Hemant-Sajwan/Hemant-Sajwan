@@ -8,7 +8,7 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
 > Item 1 (reminder emails) is built; it still needs the one-time setup above.
 
 ## Must discuss before going live
-1. [x] **Reminder & follow-up emails (2–19).** Built: `google-apps-script/reminders.gs` + `emails.gs`
+1. [x] **Reminder & follow-up emails (2–20).** Built: `google-apps-script/reminders.gs` + `emails.gs`
    (`REMINDERS-SETUP.md`). Before launch: paste the three script files, run setupReminders, fill in the
    Settings tab, check with showSchedule / previewAllEmails, and publish a new version.
 

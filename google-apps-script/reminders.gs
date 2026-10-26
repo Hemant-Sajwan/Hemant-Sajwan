@@ -78,7 +78,7 @@ function showSchedule() {
   console.log("Next alarm: " + (next ? fmt(new Date(+next)) : "none"));
 }
 
-/** Sends every email (2–19) to ADMIN_EMAIL only, filled in with the first batch's details, so you can check them. */
+/** Sends every email (2–20) to ADMIN_EMAIL only, filled in with the first batch's details, so you can check them. */
 function previewAllEmails() {
   var b = readBatches()[0] || { key: "sample", dates: "28th & 29th Oct 2026 (Wed–Thu)", time: "7:30 PM IST (India)",
     join_link: "https://example.com/join", replay_link_day1: "https://example.com/replay-1", replay_link_day2: "https://example.com/replay-2" };
