@@ -1,6 +1,6 @@
 # Launch checklist: CISSP Accelerator Domain 1 Bootcamp pages
 
-Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
+Pages: `/fve/` (free, evening batch), `/pv/` (paid, INR 97), `/fvm/` (free, morning batch – to build), `/thank-you/`,
 `/privacy-policy/`, `/terms-and-conditions/`, `/refund-policy/`, `/contact-us/`.
 
 > **Note for whoever works on this next (including Claude in a new session):**
@@ -14,7 +14,7 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
 
 ## Must be done before going live
 2. [x] **Connect the free form to Google Sheets.** Follow `google-apps-script/SETUP.md`, then put the
-   web-app link in `FORM_ENDPOINT` at the top of `bootcamp-free/index.html`. Until then the form is in test mode.
+   web-app link in `FORM_ENDPOINT` at the top of `fve/index.html`. Until then the form is in test mode.
 3. [x] **Confirmation email sender:** Google Workspace. The script sends from `support@hemantsajwan.com`
    (`FROM_ADDRESS` setting) if that is the sheet owner or a "Send mail as" alias.
 4. [x] **Paid registrations to the sheet + confirmation email and WhatsApp after payment.** Done and tested:
@@ -35,7 +35,9 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
    re-register the number).
 10. [ ] **Business portfolio admins:** former ad-agency people still have full control. Remove them
    (needs one of them to approve), and add a trusted second admin.
-11. [ ] **Merge the draft branch into `main`** (via pull request) so GitHub Pages publishes the pages.
+11. [ ] **Web address:** decide how the pages appear under cisspaccelerator.com (subdomain such as
+   go.cisspaccelerator.com/pv, redirects from the existing site, or moving the whole domain).
+12. [ ] **Merge the draft branch into `main`** (via pull request) so GitHub Pages publishes the pages.
 
 ## Open questions / nice to have
 - [x] Facebook Pixel + Google Tag Manager on all three pages (same IDs as the live site).
@@ -44,4 +46,4 @@ Pages: `/bootcamp-free/` (free), `/bootcamp/` (paid, INR 97), `/thank-you/`,
 - [ ] Q&A wording now that "live" has been removed.
 - [ ] Legal text review: refund time limit, "State of India", US-specific terms (DMCA, SSN).
 - [ ] Testimonial 1 (LinkedIn): name partly visible behind the red marks. Consider trimming the top.
-- [ ] Second free page with different timings.
+- [ ] Free page for the morning (Mon–Tue) batch at `/fvm/`.
