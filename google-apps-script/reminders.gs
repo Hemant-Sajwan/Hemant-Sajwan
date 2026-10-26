@@ -415,7 +415,7 @@ function batchRows(b) {
     var name = String(v[c.name]).trim();
     out.push({ sheet: sh, row: i + 2, sentCol: c.sent + 1, ts: v[c.ts] instanceof Date ? v[c.ts] : toDate(v[c.ts]),
                name: name, firstName: name.split(" ")[0], email: email,
-               sent: String(c.sent >= 0 ? v[c.sent] : ""), unsub: c.unsub >= 0 && !!v[c.unsub] });
+               sent: sentText(c.sent >= 0 ? v[c.sent] : ""), unsub: c.unsub >= 0 && !!v[c.unsub] });
   });
   return out;
 }
@@ -432,7 +432,18 @@ function markDone(b, e) { PropertiesService.getScriptProperties().setProperty(do
 function hasSent(r, id) { return r.sent.split(/,\s*/).indexOf(String(id)) !== -1; }
 function addSentMark(r, mark) {
   r.sent = r.sent ? r.sent + ", " + mark : String(mark);
-  if (r.sentCol > 0) r.sheet.getRange(r.row, r.sentCol).setValue(r.sent);
+  // plain text, so Google Sheets never turns "1, 2" into a date or a number
+  if (r.sentCol > 0) r.sheet.getRange(r.row, r.sentCol).setNumberFormat("@").setValue(r.sent);
+}
+// Reads the "Emails sent" cell. Older cells may have been turned into a date by Sheets ("1, 2" → 2 Jan):
+// rebuild the list from it ("month, day") so nobody gets an email twice.
+function sentText(v) {
+  if (v instanceof Date) return (v.getMonth() + 1) + ", " + v.getDate();
+  if (typeof v === "number") return String(v);
+  var s = String(v || "");
+  var m = s.match(/^\w{3} \w{3} \d{2} \d{4} [^,]*(, .*)?$/);           // "Fri Jan 02 2026 … GMT…, 2" from an earlier mix-up
+  if (m) { var d = new Date(s.split(",")[0]); if (!isNaN(d)) return (d.getMonth() + 1) + ", " + d.getDate() + (m[1] || ""); }
+  return s;
 }
 
 function normDates(s) { return String(s || "").toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, ""); }

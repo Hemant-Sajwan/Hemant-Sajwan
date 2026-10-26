@@ -462,6 +462,8 @@ function setupTabs() {
     addMissingHeadings(sh);
     orderColumns(sh);
     fillBlank(sh, "Paid/Free?", "FREE");   // rows from before this column existed were free sign-ups
+    var sent = headings(sh).indexOf("Emails sent") + 1;   // keep "1, 2, 3" as text (Sheets may read it as a date)
+    if (sent > 0) sh.getRange(1, sent, sh.getMaxRows(), 1).setNumberFormat("@");
   });
   console.log("Tabs ready: " + Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).join(", "));
 }
@@ -478,6 +480,7 @@ function getTab(name) {
     sh.setFrozenRows(1);
     var ts = COLUMNS.indexOf("Timestamp") + 1;
     sh.getRange(1, ts, sh.getMaxRows(), 1).setNumberFormat("dd mmm yyyy, hh:mm");
+    sh.getRange(1, COLUMNS.indexOf("Emails sent") + 1, sh.getMaxRows(), 1).setNumberFormat("@");
   }
   return sh;
 }
