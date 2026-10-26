@@ -55,7 +55,7 @@ function setupReminders() {
   console.log("Reminders are on. Fill in the Settings tab, then run showSchedule to check the send times.");
 }
 
-/** Run this any time to see, per batch, when each email goes out and to how many people. Sends nothing. */
+/** Run this any time (especially after editing the Settings tab): shows when each email goes out, and books the next alarm. Sends nothing. */
 function showSchedule() {
   var batches = readBatches();
   if (!batches.length) { console.log("No batch in the Settings tab has a Day 1 start yet."); return; }
@@ -73,6 +73,7 @@ function showSchedule() {
                   "  – " + e.subject);
     });
   });
+  scheduleNextEmail();                                   // (re)book the next alarm, e.g. after editing the Settings tab
   var next = PropertiesService.getScriptProperties().getProperty("NEXT_RUN");
   console.log("Next alarm: " + (next ? fmt(new Date(+next)) : "none"));
 }

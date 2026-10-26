@@ -20,7 +20,7 @@ The project now has **three** script files:
    ("Allow this application to run when you are not present"). Allow it.
    This creates the **Settings** tab and the **Emails sent** / **Unsubscribed** columns, and switches on the timer.
 5. **Fill in the Settings tab** (one row per batch, see below).
-6. Run **showSchedule**. The log lists every email with its send time. Check them.
+6. Run **showSchedule**. The log lists every email with its send time and books the first alarm. Check them.
 7. Optional: run **previewAllEmails**. All 18 emails go to support@ only, so you can read them.
 8. **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy.**
    (Needed for the unsubscribe link.)
@@ -41,7 +41,7 @@ The project now has **three** script files:
 ## Each week
 1. Update the **EDIT EACH WEEK** block on the landing page(s) **and** the batch's row in the Settings tab (same dates).
 2. Clear the two replay links. Change the join link only if it changed.
-3. Run **showSchedule** to check the times.
+3. Run **showSchedule** to check the times. (It also books the next alarm, so always run it after editing the Settings tab.)
 4. After each session, paste the **replay link**. If it's missing when the replay email is due, the email waits,
    you get a reminder, and it goes out within 30 minutes of you adding the link.
 
