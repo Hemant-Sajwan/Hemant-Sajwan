@@ -32,7 +32,7 @@ The old whitelabel-copy pages are kept in `/old/`.
    approved template). Needs access token, phone number ID, template name.
    Done for free registrations (template `bootcamp_registration`). Replies: Pabbly Connect workflow
    "WhatsApp replies" saves each reply to the *WhatsApp replies* tab and sends a free auto-reply.
-9. [ ] **Before cancelling the whitelabel:** add Hemant's own payment method in WhatsApp Manager →
+9. [x] **Done 27 Oct 2026:** own Visa set as default on WhatsApp account 4190131941272091; partners MyAppz (whitelabel) and Get Me Rank (old agency) removed; WhatsApp test OK. Original item: **Before cancelling the whitelabel:** add Hemant's own payment method in WhatsApp Manager →
    Payment settings, then remove the whitelabel's access to the WhatsApp account (don't delete or
    re-register the number).
 10. [ ] **Business portfolio admins:** former ad-agency people still have full control. Remove them
