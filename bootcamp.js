@@ -156,18 +156,25 @@
     submit.disabled = true;
     status.textContent = "Sending…";
     var google = endpoint.indexOf("script.google.com") !== -1;
+    var finished = false;
+    var finish = function () { if (finished) return; finished = true; status.textContent = ""; done(false); };
     fetch(endpoint, {
       method: "POST",
       body: google ? new URLSearchParams(data) : data,   // Google scripts read this format most reliably
       mode: google ? "no-cors" : "cors",
+      keepalive: google,                                  // keeps sending even after we move to the thank-you page
       headers: google ? {} : { Accept: "application/json" }
     }).then(function (res) {
       if (!google && !res.ok) throw new Error("Bad response");
-      status.textContent = "";
-      done(false);
+      finish();
     }).catch(function () {
+      if (finished) return;
+      finished = true;
       status.textContent = "Sorry, something went wrong. Please try again, or email support@hemantsajwan.com.";
     }).then(function () { submit.disabled = false; });
+    // The Google script takes a few seconds (sheet, email, WhatsApp). Don't make people wait for it:
+    // once the registration is on its way, go to the thank-you page; the script finishes on its own.
+    if (google) setTimeout(finish, 1500);
   });
 })();
 
