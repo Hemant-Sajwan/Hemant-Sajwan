@@ -6,7 +6,7 @@ Old addresses still work: `/free` opens `/fvm/` and `/free-bootcamp` opens `/fve
 The old whitelabel-copy pages are kept in `/old/`.
 
 > **Note for whoever works on this next (including Claude in a new session):**
-> before the pages go live, check every unticked item below with Hemant,
+> **Live since 27 Oct 2026 on cisspaccelerator.com.** Check the unticked items below with Hemant.
 > Item 1 (reminder emails) is built; it still needs the one-time setup above.
 
 ## Must discuss before going live
@@ -21,10 +21,10 @@ The old whitelabel-copy pages are kept in `/old/`.
    (`FROM_ADDRESS` setting) if that is the sheet owner or a "Send mail as" alias.
 4. [x] **Paid registrations to the sheet + confirmation email and WhatsApp after payment.** Done and tested:
    Razorpay → Pabbly workflow "Razorpay → bootcamp sheet" (New Builder) → script (`google-apps-script/PAID-SETUP.md`).
-   **At launch:** in that workflow delete the Filter step (email = hemantishere@rediffmail.com), and switch the old
+   **Done at launch (27 Oct 2026):** in that workflow deleted the Filter step (email = hemantishere@rediffmail.com), and switch the old
    classic workflow "06_2DAY_PAID_BOOTCAMP_FLOW (whitelabel)" OFF, so buyers get one confirmation, not two.
    **Each week:** update `PAID_BATCH` in the script together with the paid page's dates.
-5. [ ] **Razorpay redirect after payment:** `https://cisspaccelerator.com/thank-you/` (after the DNS switch, item 11)
+5. [x] **Razorpay redirect after payment:** `https://cisspaccelerator.com/thank-you/` (after the DNS switch, item 11)
 6. [x] **Thank-you page Step 1 / Step 2 text** promises an email and a WhatsApp message. Both are now sent
    for free and paid registrations.
 7. [ ] **Real dates and times** in the `EDIT EACH WEEK` block at the top of both landing pages.
@@ -37,7 +37,7 @@ The old whitelabel-copy pages are kept in `/old/`.
    re-register the number).
 10. [ ] **Business portfolio admins:** former ad-agency people still have full control. Remove them
    (needs one of them to approve), and add a trusted second admin.
-11. [ ] **Web address: move cisspaccelerator.com to GitHub Pages** (DNS is at Namecheap → Advanced DNS).
+11. [x] **Web address: move cisspaccelerator.com to GitHub Pages** (DNS is at Namecheap → Advanced DNS).
    Decided: the whole domain moves; the whitelabel is retired. The `CNAME` file is in the repo.
    After item 12: GitHub repo → Settings → Pages → Custom domain `cisspaccelerator.com`. Then in Namecheap:
    delete the A record `@` → `3.146.153.124`; add four A records `@` → `185.199.108.153`, `185.199.109.153`,
@@ -45,7 +45,7 @@ The old whitelabel-copy pages are kept in `/old/`.
    When GitHub shows the certificate is ready, tick **Enforce HTTPS**.
    Keep: CAA records, CNAMEs `wa`, `www.wa`, `zoom`, `www.zoom`, the mail SPF record, and the
    `facebook-domain-verification` TXT record (added 27 Oct 2026 so Meta verification survives the move).
-12. [ ] **Merge the draft branch into `main`** (via pull request) so GitHub Pages publishes the pages.
+12. [x] **Merge the draft branch into `main`** (via pull request) so GitHub Pages publishes the pages.
 
 ## Open questions / nice to have
 - [x] Facebook Pixel + Google Tag Manager on all three pages (same IDs as the live site).
