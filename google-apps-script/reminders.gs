@@ -9,7 +9,7 @@
  *     page, the time shown in emails, the exact Day 1 and Day 2 start, the join link and the replay links.
  *   - People belong to a batch when the "Bootcamp dates" in their row matches the Settings row.
  *   - Every email has a send time (see emails.gs). The script books an alarm for the next email that is
- *     due, sends it, then books the next one. An hourly safety check catches anything missed.
+ *     due, sends it, then books the next one. A backup check every 15 minutes catches anything missed.
  *   - People only get emails whose send time is AFTER they registered (email 2: 1 hour after they
  *     registered, skipped if that would be after Day 1 starts).
  *   - Promotional emails get an unsubscribe link and skip people who unsubscribed.
@@ -50,7 +50,7 @@ function setupReminders() {
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === "safetyEmailCheck") ScriptApp.deleteTrigger(t);
   });
-  ScriptApp.newTrigger("safetyEmailCheck").timeBased().everyHours(1).create();
+  ScriptApp.newTrigger("safetyEmailCheck").timeBased().everyMinutes(15).create();   // backup, in case an alarm is missed
   scheduleNextEmail();
   console.log("Reminders are on. Fill in the Settings tab, then run showSchedule to check the send times.");
 }
@@ -192,9 +192,10 @@ function onNewRegistration(ts) {
     if (!e2) return;
     var t = ts.getTime() + e2.minutes * 60e3;
     var next = +PropertiesService.getScriptProperties().getProperty("NEXT_RUN") || Infinity;
-    if (t >= next) return;
+    var booked = ScriptApp.getProjectTriggers().some(function (tr) { return tr.getHandlerFunction() === "runEmailSchedule"; });
+    if (t >= next && next > Date.now() && booked) return;   // an earlier alarm is booked; it will book this one
     var lock = LockService.getScriptLock();
-    if (!lock.tryLock(5000)) return;                    // the running job will book the next alarm
+    if (!lock.tryLock(15000)) return;                   // the running job will book the next alarm
     try { scheduleNextEmail(); } finally { lock.releaseLock(); }
   } catch (err) { console.error("Could not book the next reminder: " + err); }
 }
