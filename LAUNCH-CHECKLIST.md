@@ -1,6 +1,6 @@
 # Launch checklist: CISSP Accelerator Domain 1 Bootcamp pages
 
-Pages: `/fve/` (free, evening batch), `/pv/` (paid, INR 97), `/fvm/` (free, morning batch – to build), `/thank-you/`,
+Pages: `/fve/` (free, evening batch), `/pv/` (paid, INR 97), `/fvm/` (free, morning batch), `/thank-you/`,
 `/privacy-policy/`, `/terms-and-conditions/`, `/refund-policy/`, `/contact-us/`.
 
 > **Note for whoever works on this next (including Claude in a new session):**
@@ -46,4 +46,4 @@ Pages: `/fve/` (free, evening batch), `/pv/` (paid, INR 97), `/fvm/` (free, morn
 - [ ] Q&A wording now that "live" has been removed.
 - [ ] Legal text review: refund time limit, "State of India", US-specific terms (DMCA, SSN).
 - [ ] Testimonial 1 (LinkedIn): name partly visible behind the red marks. Consider trimming the top.
-- [ ] Free page for the morning (Mon–Tue) batch at `/fvm/`.
+- [x] Free page for the morning (Mon–Tue) batch at `/fvm/`. Fill the **morning** row of the Settings tab and run showSchedule.

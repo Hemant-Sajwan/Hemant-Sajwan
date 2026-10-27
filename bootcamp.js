@@ -178,7 +178,14 @@
   document.querySelectorAll("[data-bootcamp]").forEach(function (el) {
     var value = info[el.getAttribute("data-bootcamp")];
     if (value == null) return;
-    if (Array.isArray(value)) value = value.join(el.getAttribute("data-join") || "\n");
+    if (Array.isArray(value)) {
+      var joiner = el.getAttribute("data-join");
+      // Don't break a time in the middle: on one line (sticky bar) keep "11 AM IST (India)" together;
+      // on separate lines keep "4:30 PM AEDT" together and let only "(Australia)" wrap
+      value = value.map(function (t) {
+        return joiner ? t.replace(/ /g, "\u00a0") : t.replace(/ (?!\()/g, "\u00a0");
+      }).join(joiner || "\n");
+    }
     el.textContent = value;
   });
 })();
