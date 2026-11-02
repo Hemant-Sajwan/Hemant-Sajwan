@@ -27,7 +27,7 @@ The old whitelabel-copy pages are kept in `/old/`.
 5. [x] **Razorpay redirect after payment:** `https://cisspaccelerator.com/thank-you/` (after the DNS switch, item 11)
 6. [x] **Thank-you page Step 1 / Step 2 text** promises an email and a WhatsApp message. Both are now sent
    for free and paid registrations.
-7. [ ] **Real dates and times** in the `EDIT EACH WEEK` block at the top of both landing pages.
+7. [x] **Dates:** change by themselves every week, 8 hours before Day 1 (pages + Settings tab), since 2 Nov 2026.
 8. [x] **WhatsApp confirmation** via Meta WhatsApp Cloud API (Hemant's own WhatsApp Business number,
    approved template). Needs access token, phone number ID, template name.
    Done for free registrations (template `bootcamp_registration`). Replies: Pabbly Connect workflow

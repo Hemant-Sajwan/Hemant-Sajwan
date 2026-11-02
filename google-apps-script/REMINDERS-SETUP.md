@@ -30,7 +30,7 @@ The project now has **three** script files:
 |---|---|
 | Batch | `evening` (don't change) |
 | Registrations tab | `evening-bootcamp` (don't change) |
-| Dates (exactly as on the page) | `28th & 29th Oct 2026 (Wed–Thu)`: **word for word** the same as the page's EDIT EACH WEEK block |
+| Dates (exactly as on the page) | `28th & 29th Oct 2026 (Wed–Thu)`: **word for word** the same as on the landing page |
 | Time (shown in emails) | `7:30 PM IST (India) / 6 PM GST (UAE)` |
 | Day 1 starts | type `28/10/2026 19:30` (India time). It shows as *28 Oct 2026, 19:30* |
 | Day 2 starts | `29/10/2026 19:30` |
@@ -38,12 +38,23 @@ The project now has **three** script files:
 | Day 1 replay link | add after the Day 1 session |
 | Day 2 replay link | add after the Day 2 session |
 
-## Each week
-1. Update the **EDIT EACH WEEK** block on the landing page(s) **and** the batch's row in the Settings tab (same dates).
-2. Clear the two replay links. Change the join link only if it changed.
-3. Run **showSchedule** to check the times. (It also books the next alarm, so always run it after editing the Settings tab.)
-4. After each session, paste the **replay link**. If it's missing when the replay email is due, the email waits,
-   you get a reminder, and it goes out within 30 minutes of you adding the link.
+## Each week: the dates change by themselves
+**8 hours before Day 1** of a batch (morning: Monday 3:00 AM IST, evening: Wednesday 11:30 AM IST):
+- the landing pages switch to next week's dates (same days and times), and
+- the script adds a **new row** for next week's batch to the Settings tab: same time and join link, empty replay links.
+  You get an email: **"Next … batch added"**.
+
+The current batch keeps its own row until its emails are done (a week after Day 2, then the row is removed),
+so its people still get the replay, feedback and follow-up emails.
+
+What you do:
+1. **After each session**, paste the **replay link** into **that batch's row** (the older row, not next week's).
+   If it's missing when the replay email is due, the email waits, you get a reminder, and it goes out within
+   30 minutes of you adding the link.
+2. If the new batch has a **different join link**, change it in the new row (before 24 hours before its Day 1).
+3. To change the days or times, or skip a week: change `day1` (and `times`) in the BOOTCAMP block at the top of
+   the landing page, and the batch's newest row in the Settings tab, then run **showSchedule**.
+   `NEXT_BATCH_HOURS_BEFORE` at the top of `reminders.gs` sets the 8 hours (0 switches the new rows off).
 
 ## What you'll receive (at support@)
 - After each email goes out: **who got it** and **who didn't** (and why).
@@ -56,5 +67,6 @@ The project now has **three** script files:
   Confirmations stay there as before.
 - The **Emails sent** column shows what each person got, e.g. `1, 2, 3, 6`. `2-` = skipped
   (registered too close to Day 1), `7✗` = failed.
+- The script checks every 15 minutes (backup) in addition to its exact alarms.
 - Google allows about 1,500 emails a day. On Day 1 and Day 2 everyone gets 5 emails, so a batch can have about 300 people.
 - Booking link and the summary address are at the top of `reminders.gs` (`BOOKING_LINK`, `ADMIN_EMAIL`).
