@@ -27,7 +27,11 @@ var REMINDER_SETTINGS = {
   KEEP_COPIES_IN_SENT: false,   // false = reminders don't stay in the Sent folder (confirmations still do)
   TIME_ZONE: "Asia/Kolkata",
   SETTINGS_TAB: "Settings",
-  LATE_LIMIT_HOURS: 24          // after-session emails are dropped if they're this late (e.g. script was off)
+  LATE_LIMIT_HOURS: 24,         // after-session emails are dropped if they're this late (e.g. script was off)
+  // Next week's batch: this many hours before Day 1, a new row (same days and times, one week later) is
+  // added to the Settings tab. The landing pages switch to the new dates at the same moment. 0 = off.
+  NEXT_BATCH_HOURS_BEFORE: 8,
+  KEEP_OLD_BATCH_DAYS: 7        // a batch's row is removed this many days after its Day 2 (all its emails are done)
 };
 
 var SETTINGS_HEADINGS = ["Batch", "Registrations tab", "Dates (exactly as on the page)", "Time (shown in emails)",
@@ -57,6 +61,7 @@ function setupReminders() {
 
 /** Run this any time (especially after editing the Settings tab): shows when each email goes out, and books the next alarm. Sends nothing. */
 function showSchedule() {
+  addNextBatches();
   var batches = readBatches();
   if (!batches.length) { console.log("No batch in the Settings tab has a Day 1 start yet."); return; }
   batches.forEach(function (b) {
@@ -101,6 +106,7 @@ function runEmailSchedule() {
   var started = Date.now(), outOfTime = false;
   var budget = function () { return Date.now() - started < 4.5 * 60 * 1000; };   // Google allows 6 min per run
   try {
+    addNextBatches();
     var now = new Date();
     readBatches().forEach(function (b) {
       if (outOfTime) return;
@@ -377,7 +383,7 @@ function ensureSettingsTab() {
   sh.appendRow(["morning", SETTINGS.TABS.morning, "", "", "", "", "", "", ""]);
   sh.appendRow(["evening", SETTINGS.TABS.evening, "", "", "", "", "", "", ""]);
   sh.getRange(2, 5, 10, 2).setNumberFormat("dd mmm yyyy, hh:mm");
-  sh.getRange(1, 3).setNote("Must match the dates in the EDIT EACH WEEK block of the landing page, word for word.");
+  sh.getRange(1, 3).setNote("Must match the dates on the landing page, word for word. Next week's row is added by itself.");
   sh.getRange(1, 5).setNote("Type like 28/10/2026 19:30 (India time). It then shows as 28 Oct 2026, 19:30.");
   sh.setColumnWidths(1, SETTINGS_HEADINGS.length, 190);
   return sh;
@@ -395,6 +401,77 @@ function readBatches() {
       replay_link_day1: String(v[7]).trim(), replay_link_day2: String(v[8]).trim()
     };
   }).filter(function (b) { return b.key && b.tab && b.dates && b.day1; });
+}
+
+/** The newest row of a batch (e.g. "evening"): the one new registrations belong to. */
+function latestBatch(key) {
+  return readBatches().filter(function (b) { return b.key === key; })
+    .sort(function (a, b) { return b.day1 - a.day1; })[0];
+}
+
+/**
+ * Next week's batch: 8 hours before a batch's Day 1 (NEXT_BATCH_HOURS_BEFORE), adds a row one week later
+ * with the same time, join link and tab; the replay links start empty. The current batch keeps its own
+ * row, so its people still get the rest of their emails. Rows are removed KEEP_OLD_BATCH_DAYS after Day 2.
+ * Runs with every email check (every 15 minutes) and with every registration.
+ */
+function addNextBatches() {
+  try { addNextBatchRows(); }      // never let this stop a registration, a payment or the emails
+  catch (err) {
+    var props = PropertiesService.getScriptProperties(), today = fmt(new Date()).slice(0, 15);
+    if (props.getProperty("NEXT_BATCH_ERROR") === today) return;      // tell you at most once a day
+    props.setProperty("NEXT_BATCH_ERROR", today);
+    notifyAdmin("Could not add next week's batch", String(err && err.stack || err));
+  }
+}
+function addNextBatchRows() {
+  var hours = REMINDER_SETTINGS.NEXT_BATCH_HOURS_BEFORE;
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(REMINDER_SETTINGS.SETTINGS_TAB);
+  if (!hours || !sh) return;
+  var now = Date.now(), WEEK = 7 * 864e5, latest = {};
+  readBatches().forEach(function (b) { if (!latest[b.key] || b.day1 > latest[b.key].day1) latest[b.key] = b; });
+  Object.keys(latest).forEach(function (k) {
+    var b = latest[k], shift = 0;
+    while (now >= b.day1.getTime() + shift - hours * 3600e3) shift += WEEK;
+    if (!shift) return;                                           // not time yet
+    var day1 = new Date(b.day1.getTime() + shift);
+    var day2 = new Date((b.day2 ? b.day2.getTime() : b.day1.getTime() + 864e5) + shift);
+    var dates = bootcampDates(day1, day2);
+    sh.appendRow([b.key, b.tab, dates, b.time, day1, day2, b.join_link, "", ""]);
+    sh.getRange(sh.getLastRow(), 5, 1, 2).setNumberFormat("dd mmm yyyy, hh:mm");
+    latest[k] = { key: b.key, day1: day1 };
+    notifyAdmin("Next " + b.key + " batch added: " + dates,
+      "The " + b.key + " landing page now shows " + dates + " (" + b.time + "), and the Settings tab has a new row for it.\n\n" +
+      "The join link was copied from the previous batch (" + (b.join_link || "none") + "). If this batch has a different link, " +
+      "change it in the new row before " + fmt(new Date(day1.getTime() - 24 * 3600e3)) + ", when the first reminder with the link goes out.\n" +
+      "Add the replay links to the new row after each session, as usual.\n\n" +
+      "The previous batch (" + b.dates + ") keeps its own row until its emails are done, so put its replay links in that row.");
+  });
+  // tidy up: remove rows whose bootcamp ended more than KEEP_OLD_BATCH_DAYS ago (never the newest row of a batch)
+  var last = sh.getLastRow();
+  if (last < 2) return;
+  var vals = sh.getRange(2, 1, last - 1, SETTINGS_HEADINGS.length).getValues();
+  for (var i = vals.length - 1; i >= 0; i--) {
+    var key = String(vals[i][0]).trim(), d1 = toDate(vals[i][4]), d2 = toDate(vals[i][5]);
+    if (!key || !d1 || !d2 || !latest[key] || d1.getTime() === latest[key].day1.getTime()) continue;
+    if (now - d2.getTime() > REMINDER_SETTINGS.KEEP_OLD_BATCH_DAYS * 864e5) {
+      sh.deleteRow(i + 2);
+      var props = PropertiesService.getScriptProperties(), prefix = "DONE|" + key + "|" + d1.getTime() + "|";
+      props.getKeys().forEach(function (p) { if (p.indexOf(prefix) === 0) props.deleteProperty(p); });
+    }
+  }
+}
+
+/** Dates written the same way as on the landing pages, e.g. "9th & 10th Nov 2026 (Mon–Tue)". */
+function bootcampDates(d1, d2) {
+  var f = function (d, pattern) { return Utilities.formatDate(d, REMINDER_SETTINGS.TIME_ZONE, pattern); };
+  var day = function (d) {
+    var n = +f(d, "d"), t = n % 10, teen = n > 10 && n < 14;
+    return n + (teen ? "th" : t === 1 ? "st" : t === 2 ? "nd" : t === 3 ? "rd" : "th");
+  };
+  var sameYear = f(d1, "yyyy") === f(d2, "yyyy");
+  var first = day(d1) + (sameYear && f(d1, "MM") === f(d2, "MM") ? "" : " " + f(d1, sameYear ? "MMM" : "MMM yyyy"));
+  return first + " & " + day(d2) + " " + f(d2, "MMM yyyy") + " (" + f(d1, "EEE") + "–" + f(d2, "EEE") + ")";
 }
 
 /** Everyone registered for this batch (rows whose "Bootcamp dates" match the Settings row). */

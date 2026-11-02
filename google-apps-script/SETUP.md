@@ -39,7 +39,7 @@ About 10 minutes. You only do this once. Nothing here affects Pabbly or your exi
 ## Good to know
 - **Changing the script later:** after editing, go to **Deploy → Manage deployments → ✏️ Edit → Version: New version → Deploy**. The link stays the same.
 - **Email limits:** about 100 emails a day on a free Gmail account, 1,500 on Google Workspace. If the limit is reached, the row still saves and shows "email NOT sent".
-- **Which tab:** each landing page has `batch: "morning"` or `batch: "evening"` in its `EDIT EACH WEEK` block.
+- **Which tab:** each landing page has `batch: "morning"` or `batch: "evening"` in its BOOTCAMP block at the top.
   Entries go to the matching tab. Tab names can be changed in `TABS` in the SETTINGS block.
 - **Paid page:** entries are saved as **Payment pending** and get no email until payment is set up.
 - **Privacy:** entries go straight from the website to your own Google account. No other service is involved.

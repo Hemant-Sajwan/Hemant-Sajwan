@@ -38,5 +38,5 @@ so only your test payments use the new flow. **At launch:** delete that filter a
 whitelabel step, so buyers get one confirmation, not two.
 
 ## 3. Each week
-The paid batch's dates and time come from its row in the **Settings** tab (see `REMINDERS-SETUP.md`).
-Update that row together with the paid page's `EDIT EACH WEEK` block.
+The paid batch's dates and time come from its newest row in the **Settings** tab, which is added
+automatically every week (see `REMINDERS-SETUP.md`).

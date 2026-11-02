@@ -13,10 +13,14 @@
 
 <!--
   ================================================================
-  EDIT EACH WEEK: bootcamp dates, time(s) and mode
+  BOOTCAMP DATES, TIME(S) AND MODE
   ----------------------------------------------------------------
-  Change the text between the quotes and save. The box under the
-  video and the bar fixed to the bottom of the screen both update.
+  The dates change by themselves every week: 8 hours before Day 1
+  starts, the page moves to the next week's dates (same days and
+  times). Day 2 is the day after Day 1.
+  day1: the Day 1 start of the current batch, in India time (IST),
+  written as "YYYY-MM-DD HH:MM". Change it only to move the
+  schedule, e.g. to skip a week.
   For more than one time, add another "..." inside the [ ] brackets,
   separated by a comma.
   batch: which tab of the Google Sheet the registrations go to:
@@ -25,7 +29,7 @@
 -->
 <script>
   window.BOOTCAMP = {
-    dates: "2nd & 3rd Nov 2026 (Mon–Tue)",
+    day1:  "2026-11-09 11:00",   // Day 1 start, India time (see above)
     times: ["4:30 PM AEDT (Australia)", "6:30 PM NZDT (New Zealand)", "11 AM IST (India)", "9:30 AM GST (UAE)"],
     mode:  "Online (English)",
     batch: "morning"
@@ -124,14 +128,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       </div>
     </div>
 
-    <!-- Bootcamp details (filled in from the EDIT EACH WEEK block at the top) -->
+    <!-- Bootcamp details (filled in from the BOOTCAMP block at the top) -->
     <div class="event-panel">
       <div class="event-details">
         <div class="event-item">
           <svg class="event-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="10" width="34" height="31" rx="4"/><path d="M7 19h34M16 6v8M32 6v8"/><rect class="dot" x="14" y="25" width="6" height="5" rx="1"/><rect class="dot" x="28" y="25" width="6" height="5" rx="1"/></svg>
           <div>
             <span class="event-k">Dates – 2-Day Workshop</span>
-            <span class="event-v" data-bootcamp="dates">2nd &amp; 3rd Nov 2026 (Mon–Tue)</span>
+            <span class="event-v" data-bootcamp="dates">9th &amp; 10th Nov 2026 (Mon–Tue)</span>
             <span class="event-note">2 hours each day</span>
           </div>
         </div>
@@ -686,7 +690,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <div class="sticky-text">
         <strong>2-Day Online Workshop <span class="nowrap">(2 hours each day)</span></strong>
         <span data-bootcamp="times" data-join=" / ">4:30 PM AEDT (Australia) / 6:30 PM NZDT (New Zealand) / 11 AM IST (India) / 9:30 AM GST (UAE)</span>
-        <span data-bootcamp="dates">2nd &amp; 3rd Nov 2026 (Mon–Tue)</span>
+        <span data-bootcamp="dates">9th &amp; 10th Nov 2026 (Mon–Tue)</span>
       </div>
     </div>
     <div class="sticky-action">

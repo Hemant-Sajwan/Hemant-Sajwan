@@ -13,17 +13,23 @@
 
 <!--
   ================================================================
-  EDIT EACH WEEK: bootcamp dates, time(s) and mode
+  BOOTCAMP DATES, TIME(S) AND MODE
   ----------------------------------------------------------------
-  Change the text between the quotes and save. The box under the
-  video and the bar fixed to the bottom of the screen both update.
+  The dates change by themselves every week: 8 hours before Day 1
+  starts, the page moves to the next week's dates (same days and
+  times). Day 2 is the day after Day 1.
+  day1: the Day 1 start of the current batch, in India time (IST),
+  written as "YYYY-MM-DD HH:MM". Change it only to move the
+  schedule, e.g. to skip a week.
   For more than one time, add another "..." inside the [ ] brackets,
   separated by a comma.
+  batch: which tab of the Google Sheet the registrations go to:
+  "morning" (Mon–Tue bootcamp) or "evening" (Wed–Thu bootcamp).
   ================================================================
 -->
 <script>
   window.BOOTCAMP = {
-    dates: "4th & 5th Nov 2026 (Wed–Thu)",
+    day1:  "2026-11-04 19:30",   // Day 1 start, India time (see above)
     times: ["7:30 PM IST (India)", "6 PM GST (UAE)"],
     mode:  "Online (English)"
   };
@@ -116,7 +122,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       </div>
     </div>
 
-    <!-- Bootcamp details (filled in from the EDIT EACH WEEK block at the top) -->
+    <!-- Bootcamp details (filled in from the BOOTCAMP block at the top) -->
     <div class="event-panel">
       <div class="event-details">
         <div class="event-item">

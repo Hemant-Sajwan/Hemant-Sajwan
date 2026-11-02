@@ -129,6 +129,7 @@ function doPost(e) {
   var lock = LockService.getScriptLock();
   lock.waitLock(20000);   // one write at a time, so rows never overlap
   try {
+    addNextBatches();     // a registration right after the switch: next week's row must be there
     appendByHeading(getTab(tabFor(entry.batch)), {
       "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "FREE", "Timestamp": ts,
       "First name": entry.firstName, "Email": entry.email, "Phone": entry.phone,
@@ -146,15 +147,16 @@ function doPost(e) {
 /** Tells you once if a page's dates don't match its row in the Settings tab (then reminders wouldn't reach those people). */
 function warnIfDatesDiffer(batchKey, dates) {
   try {
-    var b = readBatches().filter(function (x) { return x.key === batchKey; })[0];
-    if (!b || normDates(b.dates) === normDates(dates)) return;
+    var rows = readBatches().filter(function (x) { return x.key === batchKey; });
+    if (!rows.length || rows.some(function (x) { return normDates(x.dates) === normDates(dates); })) return;
+    var b = latestBatch(batchKey);
     var key = "DATES_WARNED|" + batchKey + "|" + normDates(dates);
     var props = PropertiesService.getScriptProperties();
     if (props.getProperty(key)) return;
     props.setProperty(key, "1");
     notifyAdmin("Dates on the page don't match the Settings tab",
       "A registration for the " + batchKey + " batch came in with the dates \"" + dates + "\", but the Settings tab says \"" + b.dates +
-      "\".\n\nPeople registered with different dates won't get the reminder emails. Make the page's EDIT EACH WEEK block and the Settings tab match exactly.");
+      "\".\n\nPeople registered with different dates won't get the reminder emails. Check the day1 line in the BOOTCAMP block of the landing page and the Settings tab.");
   } catch (err) { console.error(err); }
 }
 
@@ -167,7 +169,10 @@ function handlePaid(p) {
   if (!secret || p.secret !== secret) return { ok: false, error: "not allowed" };
 
   var fullName = clean(p.name, 80);
-  var b = readBatches().filter(function (x) { return x.key === SETTINGS.PAID_BATCH_KEY; })[0];
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try { addNextBatches(); } finally { lock.releaseLock(); }      // a payment right after the switch gets next week's dates
+  var b = latestBatch(SETTINGS.PAID_BATCH_KEY);
   if (!b) notifyAdmin("Paid registration: no Settings row for the " + SETTINGS.PAID_BATCH_KEY + " batch",
     "A payment came in from " + fullName + " <" + p.email + "> but the Settings tab has no " + SETTINGS.PAID_BATCH_KEY +
     " row with dates and a Day 1 start, so the row has no bootcamp dates. Fill in the Settings tab and add the dates to that row.");
@@ -186,7 +191,6 @@ function handlePaid(p) {
 
   var sh = getTab(batch.tab);
   var ts = new Date();
-  var lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
     // the same payment can be passed on twice (retries); only the first one counts

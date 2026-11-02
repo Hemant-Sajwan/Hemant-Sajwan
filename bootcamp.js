@@ -1,5 +1,31 @@
 /* Shared script for the new bootcamp pages */
 
+// Bootcamp dates: worked out from window.BOOTCAMP.day1 (the top of each page). The page moves to the
+// next week's dates by itself, 8 hours before Day 1 starts. The Google Sheet script adds the next
+// week's row to the Settings tab at the same time, with the dates written the same way.
+var SWITCH_HOURS_BEFORE = 8;
+function bootcampDates() {
+  var info = window.BOOTCAMP;
+  var m = info && String(info.day1 || "").match(/^(\d{4})-(\d\d)-(\d\d) (\d\d):(\d\d)$/);
+  if (!m) return;                                  // no day1: the page shows info.dates as typed
+  var IST = 5.5 * 3600e3, DAY = 864e5;
+  var day1 = Date.UTC(+m[1], m[2] - 1, +m[3], +m[4], +m[5]) - IST;
+  while (Date.now() >= day1 - SWITCH_HOURS_BEFORE * 3600e3) day1 += 7 * DAY;
+  var d1 = new Date(day1 + IST), d2 = new Date(day1 + DAY + IST);   // read in India time with getUTC…
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  var day = function (d) {
+    var n = d.getUTCDate(), t = n % 10, teen = n > 10 && n < 14;
+    return n + (teen ? "th" : t === 1 ? "st" : t === 2 ? "nd" : t === 3 ? "rd" : "th");
+  };
+  var sameYear = d1.getUTCFullYear() === d2.getUTCFullYear();
+  var first = day(d1) + (sameYear && d1.getUTCMonth() === d2.getUTCMonth() ? "" :
+    " " + MON[d1.getUTCMonth()] + (sameYear ? "" : " " + d1.getUTCFullYear()));
+  info.dates = first + " & " + day(d2) + " " + MON[d2.getUTCMonth()] + " " + d2.getUTCFullYear() +
+    " (" + WD[d1.getUTCDay()] + "–" + WD[d2.getUTCDay()] + ")";        // e.g. 9th & 10th Nov 2026 (Mon–Tue)
+}
+bootcampDates();
+
 // Registration pop-up: every "Register Now" button opens the form
 (function () {
   var modal = document.getElementById("register-form");
@@ -124,6 +150,7 @@
     });
     if (firstBad) { firstBad.focus(); return; }
 
+    bootcampDates();                       // in case the page was left open past the switch
     var info = window.BOOTCAMP || {};
     form.elements.bootcamp_dates.value = info.dates || "";
     form.elements.bootcamp_times.value = [].concat(info.times || []).join(" / ");
