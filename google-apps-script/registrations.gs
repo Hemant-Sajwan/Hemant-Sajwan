@@ -96,7 +96,7 @@ function doPost(e) {
   if (p.source === "razorpay") return reply(handlePaid(p));
 
   var entry = {
-    firstName: clean(p.first_name, 60),
+    fullName: clean(p.first_name, 60),
     email: clean(p.email, 120).toLowerCase(),
     phone: clean(p.phone, 25),
     country: clean(p.country, 60),
@@ -107,6 +107,7 @@ function doPost(e) {
     mode: clean(p.bootcamp_mode, 60),
     batch: clean(p.batch, 20).toLowerCase()
   };
+  entry.firstName = firstNameOf(entry.fullName);   // greetings use the first name only
   if (!entry.firstName || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(entry.email) || !entry.phone) {
     return reply({ ok: false, error: "missing or invalid fields" });
   }
@@ -132,7 +133,7 @@ function doPost(e) {
     addNextBatches();     // a registration right after the switch: next week's row must be there
     appendByHeading(getTab(tabFor(entry.batch)), {
       "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "FREE", "Timestamp": ts,
-      "First name": entry.firstName, "Email": entry.email, "Phone": entry.phone,
+      "First name": entry.fullName, "Email": entry.email, "Phone": entry.phone,
       "Country": entry.country, "Challenges": entry.challenges, "Page": entry.page, "Status": status,
       "Emails sent": emailed ? "1" : ""
     });
@@ -178,7 +179,7 @@ function handlePaid(p) {
     " row with dates and a Day 1 start, so the row has no bootcamp dates. Fill in the Settings tab and add the dates to that row.");
   var batch = b ? { tab: b.tab, dates: b.dates, times: b.time } : { tab: tabFor(SETTINGS.PAID_BATCH_KEY), dates: "", times: "" };
   var entry = {
-    firstName: fullName.split(" ")[0] || fullName,   // greeting uses the first name only
+    firstName: firstNameOf(fullName),   // greeting uses the first name only
     email: clean(p.email, 120).toLowerCase(),
     phone: clean(p.phone, 25),
     dates: batch.dates, times: batch.times, mode: "Online (English)",
@@ -537,6 +538,13 @@ function orderColumns(sh) {
     var at = headings(sh).indexOf(name) + 1;
     if (at > 0 && at !== i + 1) sh.moveColumns(sh.getRange(1, at, sh.getMaxRows(), 1), i + 1);
   });
+}
+/** "Dr. Rajesh Kumar" → "Rajesh", "K. Srinivas" → "Srinivas", "Priya" → "Priya" (for greetings). */
+function firstNameOf(name) {
+  var words = String(name || "").trim().split(/\s+/).filter(String);
+  var TITLES = /^(mr|mrs|ms|miss|dr|er|prof|sir)\.?$/i;
+  while (words.length > 1 && (TITLES.test(words[0]) || /^[A-Za-z]\.?$/.test(words[0]))) words.shift();
+  return words[0] || "";
 }
 function clean(v, max) { return String(v || "").replace(/[\u0000-\u001f]/g, " ").trim().slice(0, max); }
 // stop text like "=..." or "+91..." being treated as a spreadsheet formula
