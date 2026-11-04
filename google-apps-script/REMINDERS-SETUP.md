@@ -43,6 +43,9 @@ The project now has **three** script files:
 - the landing pages switch to next week's dates (same days and times), and
 - the script adds a **new row** for next week's batch to the Settings tab: same time and join link, empty replay links.
   You get an email: **"Next … batch added"**.
+- just before that, a **highlighted row** is added at the bottom of the batch's registrations tab with its lead count,
+  e.g. `Leads for 4th & 5th Nov 2026 (Wed–Thu): 22 (India: 10, UAE: 12)`. The same line is in the email.
+  Each email address counts once; unfinished payments aren't counted; paid buyers' country comes from their phone code.
 
 The current batch keeps its own row until its emails are done (a week after Day 2, then the row is removed),
 so its people still get the replay, feedback and follow-up emails.

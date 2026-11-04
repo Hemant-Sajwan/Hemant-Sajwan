@@ -437,15 +437,21 @@ function addNextBatchRows() {
     var day1 = new Date(b.day1.getTime() + shift);
     var day2 = new Date((b.day2 ? b.day2.getTime() : b.day1.getTime() + 864e5) + shift);
     var dates = bootcampDates(day1, day2);
+    var leads = writeLeadSummary(b);                              // the closing batch's lead count, before the switch
     sh.appendRow([b.key, b.tab, dates, b.time, day1, day2, b.join_link, "", ""]);
     sh.getRange(sh.getLastRow(), 5, 1, 2).setNumberFormat("dd mmm yyyy, hh:mm");
     latest[k] = { key: b.key, day1: day1 };
     notifyAdmin("Next " + b.key + " batch added: " + dates,
+      (leads ? leads + "\n\n" : "") +
       "The " + b.key + " landing page now shows " + dates + " (" + b.time + "), and the Settings tab has a new row for it.\n\n" +
       "The join link was copied from the previous batch (" + (b.join_link || "none") + "). If this batch has a different link, " +
       "change it in the new row before " + fmt(new Date(day1.getTime() - 24 * 3600e3)) + ", when the first reminder with the link goes out.\n" +
       "Add the replay links to the new row after each session, as usual.\n\n" +
       "The previous batch (" + b.dates + ") keeps its own row until its emails are done, so put its replay links in that row.");
+  });
+  // lead count for any earlier batch that doesn't have one yet (e.g. one that switched before this was added)
+  readBatches().forEach(function (b) {
+    if (latest[b.key] && b.day1.getTime() !== latest[b.key].day1.getTime()) writeLeadSummary(b);
   });
   // tidy up: remove rows whose bootcamp ended more than KEEP_OLD_BATCH_DAYS ago (never the newest row of a batch)
   var last = sh.getLastRow();
@@ -458,8 +464,55 @@ function addNextBatchRows() {
       sh.deleteRow(i + 2);
       var props = PropertiesService.getScriptProperties(), prefix = "DONE|" + key + "|" + d1.getTime() + "|";
       props.getKeys().forEach(function (p) { if (p.indexOf(prefix) === 0) props.deleteProperty(p); });
+      props.deleteProperty("LEADS|" + key + "|" + d1.getTime());
     }
   }
+}
+
+/**
+ * Adds a highlighted row at the bottom of the batch's registrations tab, once per batch, e.g.
+ * "Leads for 4th & 5th Nov 2026 (Wed–Thu): 22 (India: 10, UAE: 12)". Counts each email once;
+ * paid buyers whose payment didn't go through aren't counted. Returns the text ("" if already done).
+ */
+function writeLeadSummary(b) {
+  var props = PropertiesService.getScriptProperties(), done = "LEADS|" + b.key + "|" + b.day1.getTime();
+  if (props.getProperty(done)) return "";
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(b.tab);
+  if (!sh) return "";
+  props.setProperty(done, "1");
+  var head = headings(sh), col = function (h) { return head.indexOf(h); };
+  var c = { dates: col("Bootcamp dates"), email: col("Email"), country: col("Country"), phone: col("Phone"), status: col("Status") };
+  var vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues() : [];
+  var seen = {}, byCountry = {}, total = 0;
+  vals.forEach(function (v) {
+    if (normDates(v[c.dates]) !== normDates(b.dates)) return;
+    var email = String(v[c.email]).trim().toLowerCase();
+    if (!email || seen[email] || /payment pending/i.test(String(v[c.status]))) return;
+    seen[email] = true;
+    total++;
+    var country = c.country >= 0 && String(v[c.country]).trim() || countryFromPhone(c.phone >= 0 ? v[c.phone] : "");
+    country = SHORT_COUNTRY[country] || country;
+    byCountry[country] = (byCountry[country] || 0) + 1;
+  });
+  var parts = Object.keys(byCountry).sort(function (x, y) { return byCountry[y] - byCountry[x] || (x < y ? -1 : 1); })
+    .map(function (k) { return k + ": " + byCountry[k]; });
+  var text = "Leads for " + b.dates + ": " + total + (parts.length ? " (" + parts.join(", ") + ")" : "");
+  sh.appendRow([text]);
+  sh.getRange(sh.getLastRow(), 1, 1, Math.max(head.length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
+  return text;
+}
+var SHORT_COUNTRY = { "United Arab Emirates": "UAE", "United States": "USA", "United Kingdom": "UK" };
+// Paid buyers' rows have no country: use the phone number's dialling code (longest match first)
+var DIAL_CODES = { "971": "UAE", "966": "Saudi Arabia", "974": "Qatar", "968": "Oman", "973": "Bahrain", "965": "Kuwait",
+  "977": "Nepal", "880": "Bangladesh", "353": "Ireland", "254": "Kenya", "234": "Nigeria", "94": "Sri Lanka",
+  "92": "Pakistan", "91": "India", "65": "Singapore", "64": "New Zealand", "61": "Australia", "60": "Malaysia",
+  "49": "Germany", "44": "UK", "33": "France", "31": "Netherlands", "27": "South Africa", "1": "USA/Canada" };
+function countryFromPhone(phone) {
+  var d = String(phone || "").replace(/[^\d+]/g, "");
+  if (d.charAt(0) !== "+" && d.length < 11) return "Not given";        // no dialling code to go by
+  d = d.replace("+", "");
+  for (var n = 3; n >= 1; n--) if (DIAL_CODES[d.slice(0, n)]) return DIAL_CODES[d.slice(0, n)];
+  return "Other";
 }
 
 /** Dates written the same way as on the landing pages, e.g. "9th & 10th Nov 2026 (Mon–Tue)". */
