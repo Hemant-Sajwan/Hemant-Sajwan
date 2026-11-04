@@ -545,7 +545,7 @@ function batchRows(b) {
     if (/payment pending/i.test(String(v[c.status]))) return;
     var name = String(v[c.name]).trim();
     out.push({ sheet: sh, row: i + 2, sentCol: c.sent + 1, ts: v[c.ts] instanceof Date ? v[c.ts] : toDate(v[c.ts]),
-               name: name, firstName: name.split(" ")[0], email: email,
+               name: name, firstName: firstNameOf(name), email: email,
                sent: sentText(c.sent >= 0 ? v[c.sent] : ""), unsub: c.unsub >= 0 && !!v[c.unsub] });
   });
   return out;
