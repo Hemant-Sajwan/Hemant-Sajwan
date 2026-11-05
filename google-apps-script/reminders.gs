@@ -55,6 +55,10 @@ function setupReminders() {
     if (t.getHandlerFunction() === "safetyEmailCheck") ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger("safetyEmailCheck").timeBased().everyMinutes(15).create();   // backup, in case an alarm is missed
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === "monthlyReport") ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger("monthlyReport").timeBased().onMonthDay(1).atHour(9).inTimezone(REMINDER_SETTINGS.TIME_ZONE).create();
   scheduleNextEmail();
   console.log("Reminders are on. Fill in the Settings tab, then run showSchedule to check the send times.");
 }
@@ -519,7 +523,122 @@ function writeLeadSummary(b) {
   var text = "Leads for " + b.dates + ": " + total + (parts.length ? " (" + parts.join(", ") + ")" : "");
   sh.appendRow([text]);
   sh.getRange(sh.getLastRow(), 1, 1, Math.max(head.length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
+  prepareTrackingColumns(sh);                                     // adds the purchases / attended count to this row
   return text;
+}
+
+// ===================== Purchased / Attended tick boxes =====================
+
+/**
+ * Purchased and Attended get tick boxes on every row. Each yellow "Leads for …" row gets a live formula in its
+ * Comments cell, e.g. "No. of purchases = 1 (UAE: 1) · Attended = 15 (India: 8, UAE: 7)", which counts the
+ * ticked rows of that batch and updates as soon as you tick or untick someone. Safe to run again.
+ */
+function prepareTrackingColumns(sh) {
+  var head = headings(sh), col = function (h) { return head.indexOf(h) + 1; };
+  var cDates = col("Bootcamp dates"), cCountry = col("Country"), cBought = col("Purchased"), cAtt = col("Attended"), cNote = col("Comments");
+  if (!cDates || !cBought || !cAtt || !cNote) return;
+  var rows = sh.getMaxRows() - 1, tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
+  sh.getRange(2, cBought, rows, 1).setDataValidation(tick);
+  sh.getRange(2, cAtt, rows, 1).setDataValidation(tick);
+  var last = sh.getLastRow();
+  if (last < 2) return;
+  var first = sh.getRange(2, 1, last - 1, 1).getValues(), notes = sh.getRange(2, cNote, last - 1, 1).getFormulas();
+  first.forEach(function (v, i) {
+    var m = String(v[0]).match(/^Leads for (.+?\)):/);         // "Leads for 4th & 5th Nov 2026 (Wed–Thu): 22 …"
+    if (!m) return;
+    var row = i + 2;
+    sh.getRange(row, cBought).clearDataValidations();          // no tick boxes in the yellow row
+    sh.getRange(row, cAtt).clearDataValidations();
+    if (!notes[i][0]) sh.getRange(row, cNote).setFormula(trackingFormula(m[1], cDates, cCountry, cBought, cAtt));
+  });
+}
+
+/** The Comments-cell formula of a yellow row (counts ticked rows whose Bootcamp dates match). */
+function trackingFormula(dates, cDates, cCountry, cBought, cAtt) {
+  var L = function (c) { var s = ""; for (; c > 0; c = Math.floor((c - 1) / 26)) s = String.fromCharCode(65 + (c - 1) % 26) + s; return s; };
+  var rng = function (c) { return "$" + L(c) + "$2:$" + L(c); };
+  var country = cCountry ? rng(cCountry) : rng(cDates);
+  var d = '"' + String(dates).replace(/"/g, '""') + '"';
+  return '=ARRAYFORMULA(LET(dts, ' + rng(cDates) + ', ctry, ' + country + ',' +
+    ' nice, IF(ctry="United Arab Emirates", "UAE", IF(ctry="United States", "USA", IF(ctry="United Kingdom", "UK", IF(ctry="", "Not given", ctry)))),' +
+    ' tally, LAMBDA(ticks, LET(hits, (dts=' + d + ')*(ticks=TRUE), howmany, SUM(hits), picked, IFERROR(FILTER(nice, hits=1), ""),' +
+    ' howmany & IF(howmany=0, "", " (" & TEXTJOIN(", ", TRUE, MAP(UNIQUE(picked), LAMBDA(cname, cname & ": " & SUM(--(picked=cname))))) & ")"))),' +
+    ' "No. of purchases = " & tally(' + rng(cBought) + ') & "  ·  Attended = " & tally(' + rng(cAtt) + ')))';
+}
+
+// ===================== monthly report (1st of each month) =====================
+
+/**
+ * On the 1st of each month (9 AM): last month's leads (each email once), leads per country and the Meta ad
+ * spend, by email to ADMIN_EMAIL and as a row in the "Monthly summary" tab. You can also run it any time:
+ * it reports on the previous calendar month.
+ * Ad spend needs two Script Properties: META_ADS_TOKEN (read-only token) and META_AD_ACCOUNT_ID (the number only).
+ */
+function monthlyReport() {
+  var tz = REMINDER_SETTINGS.TIME_ZONE, now = new Date();
+  var thisMonth = Utilities.parseDate(Utilities.formatDate(now, tz, "yyyy-MM") + "-01 00:00", tz, "yyyy-MM-dd HH:mm");
+  var lastMonth = Utilities.parseDate(Utilities.formatDate(new Date(thisMonth.getTime() - 864e5), tz, "yyyy-MM") + "-01 00:00", tz, "yyyy-MM-dd HH:mm");
+  var label = Utilities.formatDate(lastMonth, tz, "MMMM yyyy");
+  var seen = {}, byCountry = {}, total = 0;
+  Object.keys(SETTINGS.TABS).forEach(function (k) {
+    var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SETTINGS.TABS[k]);
+    if (!sh || sh.getLastRow() < 2) return;
+    var head = headings(sh), col = function (h) { return head.indexOf(h); };
+    var c = { ts: col("Timestamp"), email: col("Email"), country: col("Country"), phone: col("Phone"), status: col("Status") };
+    sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().forEach(function (v) {
+      var ts = v[c.ts] instanceof Date ? v[c.ts] : toDate(v[c.ts]);
+      var email = String(v[c.email]).trim().toLowerCase();
+      if (!ts || ts < lastMonth || ts >= thisMonth || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return;
+      if (seen[email] || /payment pending/i.test(String(v[c.status]))) return;
+      seen[email] = true;
+      total++;
+      var country = c.country >= 0 && String(v[c.country]).trim() || countryFromPhone(c.phone >= 0 ? v[c.phone] : "");
+      country = SHORT_COUNTRY[country] || country;
+      byCountry[country] = (byCountry[country] || 0) + 1;
+    });
+  });
+  var countries = Object.keys(byCountry).sort(function (x, y) { return byCountry[y] - byCountry[x] || (x < y ? -1 : 1); })
+    .map(function (k) { return k + ": " + byCountry[k]; });
+  var ads = metaAdSpend(Utilities.formatDate(lastMonth, tz, "yyyy-MM-dd"),
+                        Utilities.formatDate(new Date(thisMonth.getTime() - 864e5), tz, "yyyy-MM-dd"));
+  var spendText = ads.error ? "not available (" + ads.error + ")" : money(ads.spend, ads.currency);
+  var perLead = !ads.error && total ? money(ads.spend / total, ads.currency) : "";
+
+  var lines = ["Monthly report: " + label, "",
+    "Total leads: " + total, "Leads per country: " + (countries.join(", ") || "none"), "",
+    "Meta ad spend: " + spendText + (perLead ? "\nCost per lead: " + perLead : ""), "",
+    "Each email address is counted once; unfinished payments are not counted."];
+  notifyAdmin(label + ": " + total + " leads" + (ads.error ? "" : ", " + money(ads.spend, ads.currency) + " ad spend"), lines.join("\n"));
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet(), sum = ss.getSheetByName("Monthly summary");
+  if (!sum) {
+    sum = ss.insertSheet("Monthly summary");
+    sum.appendRow(["Month", "Total leads", "Leads per country", "Meta ad spend", "Cost per lead"]);
+    sum.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
+    sum.setFrozenRows(1);
+  }
+  sum.appendRow([label, total, countries.join(", "), ads.error ? "n/a" : money(ads.spend, ads.currency), perLead || "n/a"]);
+}
+
+/** Total Meta ad spend for the dates (inclusive), read with a read-only token. */
+function metaAdSpend(since, until) {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty("META_ADS_TOKEN"), acct = String(props.getProperty("META_AD_ACCOUNT_ID") || "").replace(/\D/g, "");
+  if (!token || !acct) return { error: "Meta ad account not connected yet" };
+  try {
+    var url = "https://graph.facebook.com/v21.0/act_" + acct + "/insights?fields=spend,account_currency&level=account" +
+      "&time_range=" + encodeURIComponent(JSON.stringify({ since: since, until: until })) + "&access_token=" + encodeURIComponent(token);
+    var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    var body = JSON.parse(res.getContentText() || "{}");
+    if (res.getResponseCode() !== 200) return { error: (body.error && body.error.message) || "Meta returned " + res.getResponseCode() };
+    var row = (body.data || [])[0] || {};
+    return { spend: +row.spend || 0, currency: row.account_currency || "INR" };
+  } catch (err) { return { error: String(err) }; }
+}
+function money(n, currency) {
+  var s = String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return (currency === "INR" ? "₹" : currency + " ") + s;
 }
 var SHORT_COUNTRY = { "United Arab Emirates": "UAE", "United States": "USA", "United Kingdom": "UK" };
 // Paid buyers' rows have no country: use the phone number's dialling code (longest match first)

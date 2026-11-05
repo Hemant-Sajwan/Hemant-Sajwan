@@ -73,3 +73,24 @@ What you do:
 - The script checks every 15 minutes (backup) in addition to its exact alarms.
 - Google allows about 1,500 emails a day. On Day 1 and Day 2 everyone gets 5 emails, so a batch can have about 300 people.
 - Booking link and the summary address are at the top of `reminders.gs` (`BOOKING_LINK`, `ADMIN_EMAIL`).
+
+## Purchased, Attended and Comments
+Both registrations tabs have **Purchased** and **Attended** tick boxes and a **Comments** column at the end.
+Tick a person's box when they buy or attend (tick one row per person if they registered twice).
+
+Each yellow **Leads for …** row has a live count in its **Comments** cell, e.g.
+`No. of purchases = 1 (UAE: 1)  ·  Attended = 15 (India: 8, UAE: 7)`. It counts the ticked rows of that batch
+and updates as soon as you tick or untick someone. (It lives in Comments because a count can't sit in the
+columns it counts.) Paid buyers' Country is filled in from their phone code.
+
+## Monthly report (1st of each month, 9 AM IST)
+An email to support@ and a row in the **Monthly summary** tab: last month's total leads (each email once),
+leads per country, Meta ad spend and cost per lead. Run **monthlyReport** any time to see the previous month.
+
+**Ad spend** needs a read-only Meta token (once):
+1. business.facebook.com → **Business settings → Users → System users → Add**: name `Reports`, role **Employee**.
+2. Select it → **Assign assets → Ad accounts →** your ad account → only **View performance** → Save.
+3. **Generate new token** → pick your app → tick only **ads_read** → expiry **Never** → copy the token.
+4. Apps Script → **Project Settings → Script Properties → Add**:
+   `META_ADS_TOKEN` = the token, `META_AD_ACCOUNT_ID` = the ad account number (Ads Manager, top left).
+5. Run **monthlyReport** to check.
