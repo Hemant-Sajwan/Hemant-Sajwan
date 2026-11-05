@@ -148,11 +148,31 @@ function runEmailSchedule() {
       });
     });
   } catch (err) {
-    notifyAdmin("Reminder emails: something went wrong", String(err && err.stack || err));
+    var failed = true;
+    reportRunError(err);
   } finally {
     lock.releaseLock();
   }
-  scheduleNextEmail(outOfTime ? new Date(Date.now() + 60e3) : null);
+  if (!failed) PropertiesService.getScriptProperties().deleteProperty("RUN_FAILURES");
+  try {
+    scheduleNextEmail(failed ? new Date(Date.now() + 5 * 60e3)       // try again in 5 minutes
+      : outOfTime ? new Date(Date.now() + 60e3) : null);
+  } catch (err) { console.error("Could not book the next alarm: " + err); }   // the 15-minute check still runs
+}
+
+/**
+ * Google's services sometimes fail for a moment ("Service Spreadsheets failed…", timeouts). Those are
+ * retried and only reported if they happen 3 runs in a row. Any other error is reported straight away.
+ */
+function reportRunError(err) {
+  var text = String(err && err.stack || err);
+  var props = PropertiesService.getScriptProperties();
+  var count = (+props.getProperty("RUN_FAILURES") || 0) + 1;
+  props.setProperty("RUN_FAILURES", String(count));
+  var temporary = /Service \w+ failed|timed out|Service error|temporarily unavailable|try again later|Address unavailable/i.test(text);
+  if (temporary && count < 3) { console.warn("Temporary Google error, retrying in 5 minutes: " + text); return; }
+  notifyAdmin("Reminder emails: something went wrong",
+    (temporary ? "Google's services have failed " + count + " times in a row (it keeps retrying every few minutes):\n\n" : "") + text);
 }
 
 /** Books one alarm for the next email that is due (or `soon`, if given). */
