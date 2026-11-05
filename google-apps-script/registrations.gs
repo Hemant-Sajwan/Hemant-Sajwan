@@ -80,7 +80,8 @@ var SETTINGS = {
 // Column order for the tabs. Each value is written under the column with the same heading,
 // so you can also drag columns around in the sheet yourself (keep the headings unchanged).
 var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Paid/Free?", "Timestamp", "First name", "Email", "Phone",
-               "Country", "Challenges", "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID"];
+               "Country", "Challenges", "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID",
+               "Purchased", "Attended", "Comments"];   // Purchased / Attended: tick boxes you fill in
 
 /** Receives each registration from the website form. */
 function doPost(e) {
@@ -199,7 +200,8 @@ function handlePaid(p) {
     var row = appendByHeading(sh, {
       "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "PAID", "Timestamp": ts,
       "First name": fullName, "Email": entry.email, "Phone": entry.phone,
-      "Page": "Paid bootcamp", "Status": "Paid", "Payment ID": entry.paymentId
+      "Page": "Paid bootcamp", "Status": "Paid", "Payment ID": entry.paymentId,
+      "Country": paidCountry(entry.phone)                  // Razorpay doesn't ask; taken from the phone code
     });
   } finally {
     lock.releaseLock();
@@ -469,6 +471,8 @@ function setupTabs() {
     fillBlank(sh, "Paid/Free?", "FREE");   // rows from before this column existed were free sign-ups
     var sent = headings(sh).indexOf("Emails sent") + 1;   // keep "1, 2, 3" as text (Sheets may read it as a date)
     if (sent > 0) sh.getRange(1, sent, sh.getMaxRows(), 1).setNumberFormat("@");
+    fillPaidCountries(sh);
+    prepareTrackingColumns(sh);                           // tick boxes, and the counts in the yellow rows
   });
   console.log("Tabs ready: " + Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).join(", "));
 }
@@ -486,6 +490,7 @@ function getTab(name) {
     var ts = COLUMNS.indexOf("Timestamp") + 1;
     sh.getRange(1, ts, sh.getMaxRows(), 1).setNumberFormat("dd mmm yyyy, hh:mm");
     sh.getRange(1, COLUMNS.indexOf("Emails sent") + 1, sh.getMaxRows(), 1).setNumberFormat("@");
+    prepareTrackingColumns(sh);
   }
   return sh;
 }
@@ -539,6 +544,24 @@ function orderColumns(sh) {
     if (at > 0 && at !== i + 1) sh.moveColumns(sh.getRange(1, at, sh.getMaxRows(), 1), i + 1);
   });
 }
+/** Country for a paid buyer from their phone's dialling code ("" if it can't tell). */
+function paidCountry(phone) {
+  var c = countryFromPhone(phone);
+  return c === "Not given" || c === "Other" ? "" : c;
+}
+// Paid rows from before the Country was filled in: fill it from the phone code
+function fillPaidCountries(sh) {
+  var head = headings(sh), last = sh.getLastRow();
+  var cc = head.indexOf("Country"), cp = head.indexOf("Phone"), cpaid = head.indexOf("Paid/Free?");
+  if (last < 2 || cc < 0 || cp < 0 || cpaid < 0) return;
+  var vals = sh.getRange(2, 1, last - 1, head.length).getValues();
+  vals.forEach(function (v, i) {
+    if (String(v[cpaid]).toUpperCase() === "PAID" && !String(v[cc]).trim() && paidCountry(v[cp])) {
+      sh.getRange(i + 2, cc + 1).setValue(paidCountry(v[cp]));
+    }
+  });
+}
+
 /** "Dr. Rajesh Kumar" → "Rajesh", "K. Srinivas" → "Srinivas", "Priya" → "Priya" (for greetings). */
 function firstNameOf(name) {
   var words = String(name || "").trim().split(/\s+/).filter(String);
