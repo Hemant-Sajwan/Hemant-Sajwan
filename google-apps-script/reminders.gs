@@ -111,6 +111,7 @@ function runEmailSchedule() {
   var budget = function () { return Date.now() - started < 4.5 * 60 * 1000; };   // Google allows 6 min per run
   try {
     addNextBatches();
+    try { refreshYellowRows(); } catch (err) { console.error(err); }   // backup for the instant update when you tick a box
     var now = new Date();
     readBatches().forEach(function (b) {
       if (outOfTime) return;
@@ -519,9 +520,9 @@ function addNextBatchRows() {
 }
 
 /**
- * Adds a highlighted row at the bottom of the batch's registrations tab, once per batch, e.g.
- * "Leads for 4th & 5th Nov 2026 (Wed–Thu): 22 (India: 10, UAE: 12)". Counts each email once;
- * paid buyers whose payment didn't go through aren't counted. Returns the text ("" if already done).
+ * Adds a highlighted row at the bottom of the batch's registrations tab, once per batch (at the weekly switch).
+ * Its first cell lists the leads by country, and the purchases and attendees (kept up to date, see refreshYellowRows).
+ * Returns the text ("" if already done).
  */
 function writeLeadSummary(b) {
   var props = PropertiesService.getScriptProperties(), done = "LEADS|" + b.key + "|" + b.day1.getTime();
@@ -529,40 +530,96 @@ function writeLeadSummary(b) {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(b.tab);
   if (!sh) return "";
   props.setProperty(done, "1");
-  var head = headings(sh), col = function (h) { return head.indexOf(h); };
-  var c = { dates: col("Bootcamp dates"), email: col("Email"), country: col("Country"), phone: col("Phone"), status: col("Status") };
-  var vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues() : [];
-  var seen = {}, byCountry = {}, total = 0;
-  vals.forEach(function (v) {
-    if (normDates(v[c.dates]) !== normDates(b.dates)) return;
-    var email = String(v[c.email]).trim().toLowerCase();
-    if (!email || seen[email] || /payment pending/i.test(String(v[c.status]))) return;
-    seen[email] = true;
-    total++;
-    var country = c.country >= 0 && String(v[c.country]).trim() || countryFromPhone(c.phone >= 0 ? v[c.phone] : "");
-    country = SHORT_COUNTRY[country] || country;
-    byCountry[country] = (byCountry[country] || 0) + 1;
-  });
-  var parts = Object.keys(byCountry).sort(function (x, y) { return byCountry[y] - byCountry[x] || (x < y ? -1 : 1); })
-    .map(function (k) { return k + ": " + byCountry[k]; });
-  var text = "Leads for " + b.dates + ": " + total + (parts.length ? " (" + parts.join(", ") + ")" : "");
+  var text = yellowText(b.dates, batchStats(sh, b.dates));
   sh.appendRow([text]);
-  sh.getRange(sh.getLastRow(), 1, 1, Math.max(head.length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
-  prepareTrackingColumns(sh);                                     // adds the purchases / attended count to this row
+  sh.getRange(sh.getLastRow(), 1, 1, Math.max(headings(sh).length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
+  sh.getRange(sh.getLastRow(), 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);   // one item per line
+  prepareTrackingColumns(sh);
   return text;
+}
+
+/**
+ * Counts for one batch in a registrations tab. Each email counts once; unfinished payments don't count.
+ * A tick on any of a person's rows counts for them.
+ */
+function batchStats(sh, dates) {
+  var head = headings(sh), col = function (h) { return head.indexOf(h); };
+  var c = { dates: col("Bootcamp dates"), email: col("Email"), country: col("Country"), phone: col("Phone"),
+            status: col("Status"), bought: col("Purchased"), att: col("Attended") };
+  var vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues() : [];
+  var people = {}, order = [];
+  var ticked = function (v, i) { return i >= 0 && (v[i] === true || /^(true|yes|y)$/i.test(String(v[i]).trim())); };
+  vals.forEach(function (v) {
+    if (normDates(v[c.dates]) !== normDates(dates)) return;
+    var email = String(v[c.email]).trim().toLowerCase();
+    if (!email || /payment pending/i.test(String(v[c.status]))) return;
+    if (!people[email]) {
+      var country = c.country >= 0 && String(v[c.country]).trim() || countryFromPhone(c.phone >= 0 ? v[c.phone] : "");
+      people[email] = { country: SHORT_COUNTRY[country] || country, bought: false, att: false };
+      order.push(email);
+    }
+    if (ticked(v, c.bought)) people[email].bought = true;
+    if (ticked(v, c.att)) people[email].att = true;
+  });
+  var tally = function (pick) {
+    var by = {}, n = 0;
+    order.forEach(function (e) { var p = people[e]; if (pick(p)) { n++; by[p.country] = (by[p.country] || 0) + 1; } });
+    var list = Object.keys(by).sort(function (x, y) { return by[y] - by[x] || (x < y ? -1 : 1); })
+      .map(function (k) { return k + ": " + by[k]; });
+    return { n: n, list: list };
+  };
+  return { leads: tally(function () { return true; }), bought: tally(function (p) { return p.bought; }),
+           att: tally(function (p) { return p.att; }) };
+}
+
+/** The yellow row's text, one item per line. */
+function yellowText(dates, st) {
+  var lines = ["Leads for " + dates + ": " + st.leads.n].concat(st.leads.list);
+  lines.push("No. of purchases: " + st.bought.n);
+  if (st.bought.n) lines.push("Purchases from: " + st.bought.list.join(", "));
+  lines.push("No. of attendees: " + st.att.n);
+  if (st.att.n) lines.push("Attendees from: " + st.att.list.join(", "));
+  return lines.join("\n");
+}
+
+/** Brings the yellow rows of a tab (or of both registrations tabs) up to date. Only changed cells are written. */
+function refreshYellowRows(sh) {
+  var tabs = sh ? [sh] : Object.keys(SETTINGS.TABS).map(function (k) {
+    return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SETTINGS.TABS[k]);
+  });
+  tabs.forEach(function (t) {
+    if (!t || t.getLastRow() < 2) return;
+    var first = t.getRange(2, 1, t.getLastRow() - 1, 1).getValues();
+    first.forEach(function (v, i) {
+      var m = String(v[0]).match(/^Leads for (.+?\)):/);
+      if (!m) return;
+      var text = yellowText(m[1], batchStats(t, m[1]));
+      if (text !== String(v[0])) t.getRange(i + 2, 1).setValue(text).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);
+    });
+  });
+}
+
+/** Ticking or unticking Purchased / Attended updates the yellow row straight away. */
+function onEdit(e) {
+  try {
+    var sh = e && e.range && e.range.getSheet();
+    if (!sh || Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).indexOf(sh.getName()) === -1) return;
+    var head = headings(sh), c1 = e.range.getColumn(), c2 = c1 + e.range.getNumColumns() - 1;
+    var hit = ["Purchased", "Attended"].some(function (h) { var c = head.indexOf(h) + 1; return c >= c1 && c <= c2; });
+    if (hit) refreshYellowRows(sh);
+  } catch (err) { console.error(err); }
 }
 
 // ===================== Purchased / Attended tick boxes =====================
 
 /**
- * Purchased and Attended get tick boxes on every row. Each yellow "Leads for …" row gets a live formula in its
- * Comments cell, e.g. "No. of purchases = 1 (UAE: 1) · Attended = 15 (India: 8, UAE: 7)", which counts the
- * ticked rows of that batch and updates as soon as you tick or untick someone. Safe to run again.
+ * Purchased and Attended get tick boxes on every row (a ticked Purchased turns the row light green).
+ * Yellow rows get no tick boxes, and their text is brought up to date. Safe to run again.
  */
 function prepareTrackingColumns(sh) {
   var head = headings(sh), col = function (h) { return head.indexOf(h) + 1; };
-  var cDates = col("Bootcamp dates"), cCountry = col("Country"), cBought = col("Purchased"), cAtt = col("Attended"), cNote = col("Comments");
-  if (!cDates || !cBought || !cAtt || !cNote) return;
+  var cBought = col("Purchased"), cAtt = col("Attended"), cNote = col("Comments");
+  if (!cBought || !cAtt) return;
   var rows = sh.getMaxRows() - 1, tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
   sh.getRange(2, cBought, rows, 1).setDataValidation(tick);
   sh.getRange(2, cAtt, rows, 1).setDataValidation(tick);
@@ -577,32 +634,21 @@ function prepareTrackingColumns(sh) {
   sh.setConditionalFormatRules(rules);
   var last = sh.getLastRow();
   if (last < 2) return;
-  var first = sh.getRange(2, 1, last - 1, 1).getValues(), notes = sh.getRange(2, cNote, last - 1, 1).getFormulas();
+  var first = sh.getRange(2, 1, last - 1, 1).getValues();
+  var notes = cNote ? sh.getRange(2, cNote, last - 1, 1).getFormulas() : [];
   first.forEach(function (v, i) {
-    var m = String(v[0]).match(/^Leads for (.+?\)):/);         // "Leads for 4th & 5th Nov 2026 (Wed–Thu): 22 …"
-    if (!m) return;
+    if (!/^Leads for /.test(String(v[0]))) return;
     var row = i + 2;
     sh.getRange(row, cBought).clearDataValidations().clearContent();   // no tick boxes in the yellow row
     sh.getRange(row, cAtt).clearDataValidations().clearContent();
     var cPaid = col("Paid/Free?");                             // so the leads text isn't cut off
     if (cPaid && String(sh.getRange(row, cPaid).getValue()) === "FREE") sh.getRange(row, cPaid).clearContent();
-    if (!notes[i][0]) sh.getRange(row, cNote).setFormula(trackingFormula(m[1], cDates, cCountry, cBought, cAtt));
+    if (cNote && /^=ARRAYFORMULA\(LET\(dts/.test(notes[i][0])) sh.getRange(row, cNote).clearContent();   // the old count
   });
+  refreshYellowRows(sh);
 }
 
-/** The Comments-cell formula of a yellow row (counts ticked rows whose Bootcamp dates match). */
 function colLetter(c) { var s = ""; for (; c > 0; c = Math.floor((c - 1) / 26)) s = String.fromCharCode(65 + (c - 1) % 26) + s; return s; }
-function trackingFormula(dates, cDates, cCountry, cBought, cAtt) {
-  var L = colLetter;
-  var rng = function (c) { return "$" + L(c) + "$2:$" + L(c); };
-  var country = cCountry ? rng(cCountry) : rng(cDates);
-  var d = '"' + String(dates).replace(/"/g, '""') + '"';
-  return '=ARRAYFORMULA(LET(dts, ' + rng(cDates) + ', ctry, ' + country + ',' +
-    ' nice, IF(ctry="United Arab Emirates", "UAE", IF(ctry="United States", "USA", IF(ctry="United Kingdom", "UK", IF(ctry="", "Not given", ctry)))),' +
-    ' tally, LAMBDA(ticks, LET(hits, (dts=' + d + ')*(ticks=TRUE), howmany, SUM(hits), picked, IFERROR(FILTER(nice, hits=1), ""),' +
-    ' howmany & IF(howmany=0, "", " (" & TEXTJOIN(", ", TRUE, MAP(UNIQUE(picked), LAMBDA(cname, cname & ": " & SUM(--(picked=cname))))) & ")"))),' +
-    ' "No. of purchases = " & tally(' + rng(cBought) + ') & "  ·  Attended = " & tally(' + rng(cAtt) + ')))';
-}
 
 // ===================== monthly report (1st of each month) =====================
 

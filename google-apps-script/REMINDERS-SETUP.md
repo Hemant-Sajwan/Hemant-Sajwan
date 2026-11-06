@@ -43,8 +43,8 @@ The project now has **three** script files:
 - the landing pages switch to next week's dates (same days and times), and
 - the script adds a **new row** for next week's batch to the Settings tab: same time and join link, empty replay links.
   You get an email: **"Next … batch added"**.
-- just before that, a **highlighted row** is added at the bottom of the batch's registrations tab with its lead count,
-  e.g. `Leads for 4th & 5th Nov 2026 (Wed–Thu): 22 (India: 10, UAE: 12)`. The same line is in the email.
+- just before that, a **highlighted row** is added at the bottom of the batch's registrations tab with its lead count
+  per country (see below). The same text is in the email.
   Each email address counts once; unfinished payments aren't counted; paid buyers' country comes from their phone code.
 
 The current batch keeps its own row until its emails are done (a week after Day 2, then the row is removed),
@@ -79,10 +79,10 @@ Both registrations tabs have **Purchased** and **Attended** tick boxes and a **C
 **Challenges**. A ticked Purchased box turns the row light green.
 Tick a person's box when they buy or attend (tick one row per person if they registered twice).
 
-Each yellow **Leads for …** row has a live count in its **Comments** cell, e.g.
-`No. of purchases = 1 (UAE: 1)  ·  Attended = 15 (India: 8, UAE: 7)`. It counts the ticked rows of that batch
-and updates as soon as you tick or untick someone. (It lives in Comments because a count can't sit in the
-columns it counts.) Paid buyers' Country is filled in from their phone code.
+Each yellow **Leads for …** row's first cell lists, one per line: the batch's leads and leads per country,
+the number of purchases and where from, and the number of attendees. Ticking or unticking Purchased / Attended
+updates it within a second or two (and the 15-minute check refreshes it too). Each email counts once.
+Paid buyers' Country is filled in from their phone code.
 
 **Ticking Purchased also stops emails 17–20** (feedback request and the 3 sales emails) for that person;
 they still get email 16 (the replays). One tick covers all of a person's rows. Tick before the emails go out:
