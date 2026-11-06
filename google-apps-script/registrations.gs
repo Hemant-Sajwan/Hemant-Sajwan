@@ -316,18 +316,24 @@ function sendConfirmation(entry) {
  * Returns null when WhatsApp isn't set up yet, otherwise { ok: true/false, detail: "..." }.
  */
 function sendWhatsApp(entry) {
+  return sendWhatsAppTemplate(entry.phone, SETTINGS.WHATSAPP_TEMPLATE,
+    SETTINGS.WHATSAPP_PARAMS.map(function (key) { return entry[key]; }));
+}
+
+/** Sends one approved template to a phone number, filling {{1}}, {{2}} … with values. null = WhatsApp not set up. */
+function sendWhatsAppTemplate(phone, templateName, values) {
   var props = PropertiesService.getScriptProperties();
   var token = props.getProperty("WHATSAPP_TOKEN");
   var phoneId = props.getProperty("WHATSAPP_PHONE_NUMBER_ID");
   if (!token || !phoneId) return null;
-  var to = String(entry.phone || "").replace(/\D/g, "");          // "+91 98765 43210" -> "919876543210"
+  var to = String(phone || "").replace(/\D/g, "");               // "+91 98765 43210" -> "919876543210"
   if (to.length < 8) return { ok: false, detail: "phone number too short" };
-  var params = SETTINGS.WHATSAPP_PARAMS.map(function (key) {
+  var params = (values || []).map(function (v) {
     // template values may not contain line breaks or long runs of spaces
-    var text = String(entry[key] || "-").replace(/\s+/g, " ").trim() || "-";
+    var text = String(v || "-").replace(/\s+/g, " ").trim() || "-";
     return { type: "text", text: text };
   });
-  var template = { name: SETTINGS.WHATSAPP_TEMPLATE, language: { code: SETTINGS.WHATSAPP_LANGUAGE } };
+  var template = { name: templateName, language: { code: SETTINGS.WHATSAPP_LANGUAGE } };
   if (params.length) template.components = [{ type: "body", parameters: params }];
   try {
     var res = UrlFetchApp.fetch(

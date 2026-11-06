@@ -31,8 +31,15 @@ var REMINDER_SETTINGS = {
   // Next week's batch: this many hours before Day 1, a new row (same days and times, one week later) is
   // added to the Settings tab. The landing pages switch to the new dates at the same moment. 0 = off.
   NEXT_BATCH_HOURS_BEFORE: 8,
+  SEND_WHATSAPP_REMINDERS: true,  // WhatsApp reminders W1–W4 (emails.gs); needs the 5 approved templates
   KEEP_OLD_BATCH_DAYS: 7        // a batch's row is removed this many days after its Day 2 (all its emails are done)
 };
+
+/** Everything with a send time: the emails, plus the WhatsApp reminders when they're switched on. */
+function scheduleItems() {
+  return EMAILS.concat(REMINDER_SETTINGS.SEND_WHATSAPP_REMINDERS && typeof WHATSAPP_REMINDERS !== "undefined" ? WHATSAPP_REMINDERS : []);
+}
+function label(e) { return (e.whatsapp ? "WhatsApp " : "Email ") + e.id; }
 
 var SETTINGS_HEADINGS = ["Batch", "Registrations tab", "Dates (exactly as on the page)", "Time (shown in emails)",
   "Day 1 starts", "Day 2 starts", "Join link", "Day 1 replay link", "Day 2 replay link"];
@@ -72,13 +79,13 @@ function showSchedule() {
     var people = batchRows(b);
     console.log("=== " + b.key + " batch: " + b.dates + "  (" + people.length + " registered so far) ===");
     console.log("Day 1 starts " + fmt(b.day1) + (b.day2 ? ", Day 2 starts " + fmt(b.day2) : ", Day 2 start MISSING"));
-    EMAILS.forEach(function (e) {
-      if (e.anchor === "registration") { console.log("Email " + e.id + ": 1 hour after each registration"); return; }
+    scheduleItems().forEach(function (e) {
+      if (e.anchor === "registration") { console.log(label(e) + ": 1 hour after each registration"); return; }
       var due = dueTime(b, e);
-      if (!due) { console.log("Email " + e.id + ": needs the Day 2 start"); return; }
+      if (!due) { console.log(label(e) + ": needs the Day 2 start"); return; }
       var state = isDone(b, e) ? "  [done]" : "";
       var missing = (e.needs || []).filter(function (k) { return !b[k]; });
-      console.log("Email " + e.id + ": " + fmt(due) + state + (missing.length ? "  (waiting for " + missing.join(", ") + ")" : "") +
+      console.log(label(e) + ": " + fmt(due) + state + (missing.length ? "  (waiting for " + missing.join(", ") + ")" : "") +
                   "  – " + e.subject);
     });
   });
@@ -116,14 +123,14 @@ function runEmailSchedule() {
     readBatches().forEach(function (b) {
       if (outOfTime) return;
       // ---- batch-wide emails ----
-      EMAILS.forEach(function (e) {
+      scheduleItems().forEach(function (e) {
         if (!outOfTime && e.notIfPurchased && isDone(b, e) && catchUpUnticked(b, e, now, budget)) outOfTime = true;
         if (outOfTime || e.anchor === "registration" || isDone(b, e)) return;
         var due = dueTime(b, e);
         if (!due || due.getTime() > now.getTime() + 30 * 1000) return;           // not due yet
         var anchor = e.anchor === "day1" ? b.day1 : b.day2;
-        if (e.minutes < 0 && now >= anchor) { markDone(b, e); notifyAdmin("Email " + e.id + " skipped (too late)",
-          "Email " + e.id + " (\"" + e.subject + "\") for the " + b.key + " batch was due " + fmt(due) +
+        if (e.minutes < 0 && now >= anchor) { markDone(b, e); notifyAdmin(label(e) + " skipped (too late)",
+          label(e) + " (\"" + e.subject + "\") for the " + b.key + " batch was due " + fmt(due) +
           " but the session had already started, so it was not sent."); return; }
         if (e.minutes >= 0 && now.getTime() - due.getTime() > REMINDER_SETTINGS.LATE_LIMIT_HOURS * 3600e3) { markDone(b, e); return; }
         var missing = (e.needs || []).filter(function (k) { return !b[k]; });
@@ -135,7 +142,7 @@ function runEmailSchedule() {
         if (e.notIfPurchased) rows.forEach(function (r) {                    // "17p" = skipped because Purchased was ticked
           if (r.ts && r.ts < due && r.purchased && !hasSent(r, e.id) && !hasSent(r, e.id + "p")) addSentMark(r, e.id + "p");
         });
-        var res = sendToPeople(b, e, people, budget);
+        var res = e.whatsapp ? sendWhatsAppToPeople(b, e, people, budget) : sendToPeople(b, e, people, budget);
         if (res.stoppedEarly) outOfTime = true; else markDone(b, e);
         sendSummary(b, e, res);
       });
@@ -190,7 +197,7 @@ function scheduleNextEmail(soon) {
   var now = Date.now(), next = soon ? soon.getTime() : Infinity;
   var start = +PropertiesService.getScriptProperties().getProperty("REMINDERS_START") || 0;
   readBatches().forEach(function (b) {
-    EMAILS.forEach(function (e) {
+    scheduleItems().forEach(function (e) {
       if (e.anchor === "registration") {
         if (b.day1.getTime() <= now) return;
         batchRows(b).forEach(function (r) {
@@ -274,11 +281,63 @@ function catchUpUnticked(b, e, now, budget) {
   });
   if (!people.length) return false;
   var res = sendToPeople(b, e, people, budget);
-  notifyAdmin("Email " + e.id + " sent after Purchased was unticked",
-    "Email " + e.id + " (\"" + e.subject + "\") was skipped for these people because Purchased was ticked, and the tick " +
+  notifyAdmin(label(e) + " sent after Purchased was unticked",
+    label(e) + " (\"" + e.subject + "\") was skipped for these people because Purchased was ticked, and the tick " +
     "has since been removed, so it has now been sent:\n" + res.sent.map(function (r) { return "  ✓ " + r.name + " <" + r.email + ">"; }).join("\n") +
     (res.failed.length ? "\nNot sent:\n" + res.failed.map(function (f) { return "  ✗ " + f.r.name + ": " + f.why; }).join("\n") : ""));
   return res.stoppedEarly;
+}
+
+/**
+ * Sends a WhatsApp reminder (its templates, one after the other) to each person. People who replied STOP,
+ * or have no phone number, are left out; someone registered twice gets it once.
+ */
+function sendWhatsAppToPeople(b, e, people, budget) {
+  var res = { sent: [], failed: [], stoppedEarly: false }, stopped = whatsappOptOuts(), done = {};
+  for (var i = 0; i < people.length; i++) {
+    if (!budget()) { res.stoppedEarly = true; break; }
+    var r = people[i], digits = String(r.phone || "").replace(/\D/g, "");
+    if (!digits || stopped[digits]) continue;                     // no number, or replied STOP
+    if (done[digits]) { addSentMark(r, e.id); continue; }          // same person, second registration
+    var vars = varsFor(b, r), why = "";
+    for (var j = 0; j < e.templates.length && !why; j++) {
+      if (j) Utilities.sleep(1500);                                // keeps the messages in order
+      var t = e.templates[j];
+      var out = sendWhatsAppTemplate(r.phone, t.name, t.params.map(function (k) { return vars[k]; }));
+      if (!out) why = "WhatsApp is not set up (token / phone number ID)";
+      else if (!out.ok) why = "message " + (j + 1) + " (" + t.name + "): " + String(out.detail).slice(0, 200);
+    }
+    if (why) { addSentMark(r, e.id + "✗"); res.failed.push({ r: r, why: why }); }
+    else { addSentMark(r, e.id); res.sent.push(r); done[digits] = true; }
+  }
+  return res;
+}
+
+/** Phone numbers (digits only) that replied STOP, from the "WhatsApp replies" tab. */
+function whatsappOptOuts() {
+  var out = {}, sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("WhatsApp replies");
+  if (!sh || sh.getLastRow() < 2) return out;
+  sh.getRange(1, 1, sh.getLastRow(), Math.max(sh.getLastColumn(), 1)).getValues().forEach(function (row) {
+    if (!row.some(function (x) { return /^\s*stop\s*$/i.test(String(x)); })) return;
+    row.forEach(function (x) { var d = String(x).replace(/\D/g, ""); if (d.length >= 8 && d.length <= 15) out[d] = true; });
+  });
+  return out;
+}
+
+/**
+ * Run this once the 5 templates are approved: sends all four WhatsApp reminders (8 messages) to
+ * WHATSAPP_TEST_NUMBER (in registrations.gs), with a sample name and the newest batch's join link.
+ */
+function testWhatsAppReminders() {
+  var b = readBatches().sort(function (x, y) { return y.day1 - x.day1; })[0];
+  var vars = { first_name: "Hemant", join_link: (b && b.join_link) || "https://example.com/join" };
+  WHATSAPP_REMINDERS.forEach(function (e) {
+    e.templates.forEach(function (t, j) {
+      if (j) Utilities.sleep(1500);
+      var out = sendWhatsAppTemplate(SETTINGS.WHATSAPP_TEST_NUMBER, t.name, t.params.map(function (k) { return vars[k]; }));
+      console.log(e.id + " message " + (j + 1) + " (" + t.name + "): " + (!out ? "WhatsApp not set up" : out.ok ? "sent" : "NOT sent: " + out.detail));
+    });
+  });
 }
 
 /** Sends one email from the support@ address (same route as the confirmation email). */
@@ -310,7 +369,7 @@ function removeSentCopies(subject, since, people) {
 }
 
 function sendSummary(b, e, res) {
-  var lines = ["Email " + e.id + ": " + e.subject, "Batch: " + b.key + " (" + b.dates + ")", ""];
+  var lines = [label(e) + ": " + e.subject, "Batch: " + b.key + " (" + b.dates + ")", ""];
   lines.push("Sent to " + res.sent.length + (res.sent.length ? ":" : "."));
   res.sent.forEach(function (r) { lines.push("  ✓ " + r.name + " <" + r.email + ">"); });
   if (res.failed.length) {
@@ -318,7 +377,7 @@ function sendSummary(b, e, res) {
     res.failed.forEach(function (f) { lines.push("  ✗ " + f.r.name + " <" + f.r.email + ">: " + f.why); });
   }
   if (res.stoppedEarly) lines.push("", "(More people still to go: the rest are being sent in a minute.)");
-  notifyAdmin("Email " + e.id + " " + (res.failed.length ? "sent with " + res.failed.length + " failed" : "sent") +
+  notifyAdmin(label(e) + " " + (res.failed.length ? "sent with " + res.failed.length + " failed" : "sent") +
               ": " + b.key + " batch (" + res.sent.length + " people)", lines.join("\n"));
 }
 
@@ -327,10 +386,12 @@ function askForLinkOnce(b, e, missing) {
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty(key)) return;
   props.setProperty(key, "1");
-  var names = missing.map(function (k) { return k === "replay_link_day1" ? "Day 1 replay link" : "Day 2 replay link"; });
-  notifyAdmin("Add the " + names.join(" and ") + " – email " + e.id + " is waiting",
-    "Email " + e.id + " (\"" + e.subject + "\") for the " + b.key + " batch is due now, but the " + names.join(" and ") +
-    " is empty in the Settings tab.\n\nPaste the link into the Settings tab. The email goes out automatically within 30 minutes.");
+  var names = missing.map(function (k) {
+    return k === "replay_link_day1" ? "Day 1 replay link" : k === "replay_link_day2" ? "Day 2 replay link" : "join link";
+  });
+  notifyAdmin("Add the " + names.join(" and ") + " – " + label(e) + " is waiting",
+    label(e) + " (\"" + e.subject + "\") for the " + b.key + " batch is due now, but the " + names.join(" and ") +
+    " is empty in the Settings tab.\n\nPaste the link into the Settings tab. It goes out automatically within 30 minutes.");
 }
 
 function notifyAdmin(subject, text) {
@@ -762,7 +823,8 @@ function batchRows(b) {
   var head = headings(sh);
   var col = function (h) { return head.indexOf(h); };
   var c = { dates: col("Bootcamp dates"), ts: col("Timestamp"), name: col("First name"), email: col("Email"),
-            sent: col("Emails sent"), unsub: col("Unsubscribed"), status: col("Status"), bought: col("Purchased") };
+            sent: col("Emails sent"), unsub: col("Unsubscribed"), status: col("Status"), bought: col("Purchased"),
+            phone: col("Phone") };
   var want = normDates(b.dates);
   var vals = sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues();
   var out = [];
@@ -773,7 +835,7 @@ function batchRows(b) {
     if (/payment pending/i.test(String(v[c.status]))) return;
     var name = String(v[c.name]).trim();
     out.push({ sheet: sh, row: i + 2, sentCol: c.sent + 1, ts: v[c.ts] instanceof Date ? v[c.ts] : toDate(v[c.ts]),
-               name: name, firstName: firstNameOf(name), email: email,
+               name: name, firstName: firstNameOf(name), email: email, phone: c.phone >= 0 ? String(v[c.phone]) : "",
                sent: sentText(c.sent >= 0 ? v[c.sent] : ""), unsub: c.unsub >= 0 && !!v[c.unsub],
                purchased: c.bought >= 0 && (v[c.bought] === true || /^(true|yes|y)$/i.test(String(v[c.bought]).trim())) });
   });
