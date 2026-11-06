@@ -651,7 +651,8 @@ function yellowText(dates, st) {
   if (st.att.n) lines.push("Attendees from: " + st.att.list.join(", "));
   var ad = savedAdSpend(dates);
   if (ad) {
-    lines.push("Ad spend: " + money(ad.spend, ad.currency) + (ad.final ? "" : " (so far)"));
+    lines.push("Ad spend" + (ad.since ? " " + shortRange(ad.since, ad.until) : "") + ": " + money(ad.spend, ad.currency) +
+               (ad.final ? "" : " (so far)"));
     if (st.leads.n) lines.push("Cost per lead: " + money(ad.spend / st.leads.n, ad.currency));
   }
   return lines.join("\n");
@@ -661,6 +662,14 @@ function yellowText(dates, st) {
 // A batch's spend = its campaigns (AD_CAMPAIGNS) over the 7 days before its Day 1: after each weekly switch
 // the ads already bring people to the next dates. Read from Meta at the switch and then hourly until a day
 // after Day 1, when the figure is final. Saved in Script Properties, so ticking boxes never calls Meta.
+
+/** "2026-10-28", "2026-11-03" → "28 Oct–3 Nov"; same month → "2–8 Nov". */
+function shortRange(since, until) {
+  var M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var a = String(since).split("-"), b = String(until).split("-");
+  var from = +a[2] + (a[1] === b[1] ? "" : " " + M[+a[1] - 1]);
+  return from + "–" + (+b[2]) + " " + M[+b[1] - 1];
+}
 
 function savedAdSpend(dates) {
   var v = PropertiesService.getScriptProperties().getProperty("ADSPEND|" + normDates(dates));
