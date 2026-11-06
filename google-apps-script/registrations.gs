@@ -81,7 +81,8 @@ var SETTINGS = {
 // so you can also drag columns around in the sheet yourself (keep the headings unchanged).
 var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Paid/Free?", "Timestamp", "First name", "Email", "Phone",
                "Country", "Challenges", "Purchased", "Attended", "Comments",   // Purchased / Attended: tick boxes you fill in
-               "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID"];
+               "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID",
+               "Purchased on"];   // filled in by itself when you tick Purchased (for the monthly report)
 
 /** Receives each registration from the website form. */
 function doPost(e) {
