@@ -620,9 +620,16 @@ function prepareTrackingColumns(sh) {
   var head = headings(sh), col = function (h) { return head.indexOf(h) + 1; };
   var cBought = col("Purchased"), cAtt = col("Attended"), cNote = col("Comments");
   if (!cBought || !cAtt) return;
-  var rows = sh.getMaxRows() - 1, tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
-  sh.getRange(2, cBought, rows, 1).setDataValidation(tick);
-  sh.getRange(2, cAtt, rows, 1).setDataValidation(tick);
+  var rows = sh.getMaxRows() - 1, last = sh.getLastRow(), tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
+  // tick boxes only on rows that have a registration (an empty tick box counts as data in Sheets)
+  if (last > 1) {
+    sh.getRange(2, cBought, last - 1, 1).setDataValidation(tick);
+    sh.getRange(2, cAtt, last - 1, 1).setDataValidation(tick);
+  }
+  if (rows > last - 1) {
+    sh.getRange(last + 1, cBought, rows - (last - 1), 1).clearDataValidations();
+    sh.getRange(last + 1, cAtt, rows - (last - 1), 1).clearDataValidations();
+  }
   // a ticked Purchased box turns the whole row light green
   var green = "=$" + colLetter(cBought) + "2=TRUE";
   var rules = sh.getConditionalFormatRules().filter(function (r) {
@@ -632,7 +639,6 @@ function prepareTrackingColumns(sh) {
   rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(green).setBackground("#C8E6C9")
     .setRanges([sh.getRange(2, 1, rows, Math.max(sh.getLastColumn(), head.length))]).build());
   sh.setConditionalFormatRules(rules);
-  var last = sh.getLastRow();
   if (last < 2) return;
   var first = sh.getRange(2, 1, last - 1, 1).getValues();
   var notes = cNote ? sh.getRange(2, cNote, last - 1, 1).getFormulas() : [];

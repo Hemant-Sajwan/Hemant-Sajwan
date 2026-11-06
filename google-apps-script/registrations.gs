@@ -468,6 +468,7 @@ function setupTabs() {
     var sh = getTab(SETTINGS.TABS[k]);
     addMissingHeadings(sh);
     orderColumns(sh);
+    removeEmptyRows(sh);                   // rows with nothing but FREE / empty tick boxes (from an earlier version)
     fillBlank(sh, "Paid/Free?", "FREE");   // rows from before this column existed were free sign-ups
     var sent = headings(sh).indexOf("Emails sent") + 1;   // keep "1, 2, 3" as text (Sheets may read it as a date)
     if (sent > 0) sh.getRange(1, sent, sh.getMaxRows(), 1).setNumberFormat("@");
@@ -508,7 +509,12 @@ function appendByHeading(sh, values) {
     }
   });
   sh.appendRow(head.map(function (h) { return h in values ? safeCell(values[h]) : ""; }));
-  return sh.getLastRow();
+  var row = sh.getLastRow(), tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
+  ["Purchased", "Attended"].forEach(function (h) {             // tick boxes on this row only
+    var c = head.indexOf(h) + 1;
+    if (c) sh.getRange(row, c).setDataValidation(tick);
+  });
+  return row;
 }
 function addMissingHeadings(sh) {
   var head = headings(sh);
@@ -534,9 +540,10 @@ function fillBlank(sh, heading, value) {
   var col = headings(sh).indexOf(heading) + 1;
   var last = sh.getLastRow();
   if (col < 1 || last < 2) return;
-  var range = sh.getRange(2, col, last - 1, 1), first = sh.getRange(2, 1, last - 1, 1).getValues();
+  var cEmail = headings(sh).indexOf("Email") + 1;
+  var range = sh.getRange(2, col, last - 1, 1), emails = sh.getRange(2, cEmail || 1, last - 1, 1).getValues();
   range.setValues(range.getValues().map(function (r, i) {
-    return [r[0] === "" && !/^Leads for /.test(String(first[i][0])) ? value : r[0]];   // not in the yellow rows
+    return [r[0] === "" && cEmail && String(emails[i][0]).trim() ? value : r[0]];   // only rows with a registration
   }));
 }
 // Moves columns (with their data) so the headings follow the COLUMNS order.
@@ -546,6 +553,25 @@ function orderColumns(sh) {
     if (at > 0 && at !== i + 1) sh.moveColumns(sh.getRange(1, at, sh.getMaxRows(), 1), i + 1);
   });
 }
+/**
+ * Deletes rows that hold nothing but "FREE", empty tick boxes (FALSE) or blanks, e.g. the ones an earlier version
+ * created down to row 1000. Rows with anything else in them are kept (and move up).
+ */
+function removeEmptyRows(sh) {
+  var last = sh.getLastRow(), width = sh.getLastColumn();
+  if (last < 2 || width < 1) return;
+  var vals = sh.getRange(2, 1, last - 1, width).getValues();
+  var empty = function (v) { return v.every(function (x) { return x === "" || x === false || x === "FREE" || String(x) === "FALSE"; }); };
+  for (var i = vals.length - 1; i >= 0; ) {
+    if (!empty(vals[i])) { i--; continue; }
+    var end = i;
+    while (i >= 0 && empty(vals[i])) i--;
+    var count = end - i, start = i + 3;                       // sheet row of the first empty row in this block
+    if (start + count - 1 >= sh.getMaxRows() && start === 2) { sh.getRange(2, 1, count, width).clearContent().clearDataValidations(); continue; }
+    sh.deleteRows(start, count);
+  }
+}
+
 /** Country for a paid buyer from their phone's dialling code ("" if it can't tell). */
 function paidCountry(phone) {
   var c = countryFromPhone(phone);
