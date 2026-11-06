@@ -698,6 +698,36 @@ function refreshAdSpend() {
   batches.forEach(function (b) { if (b !== latest[b.key]) updateAdSpend(b, false); });
 }
 
+/** Adds a "Bootcamp" menu to the sheet (runs by itself when the sheet is opened). */
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu("Bootcamp")
+    .addItem("Connect Meta ads (token)", "connectMetaAds")
+    .addToUi();
+}
+
+/**
+ * Bootcamp → Connect Meta ads: asks for the read-only token and the ad account number, saves them in Script
+ * Properties (META_ADS_TOKEN, META_AD_ACCOUNT_ID) and checks them by reading the last 7 days' spend.
+ */
+function connectMetaAds() {
+  var ui = SpreadsheetApp.getUi(), props = PropertiesService.getScriptProperties();
+  var t = ui.prompt("Connect Meta ads (1 of 2)", "Paste the read-only token (ads_read) from Business settings → System users:", ui.ButtonSet.OK_CANCEL);
+  if (t.getSelectedButton() !== ui.Button.OK || !t.getResponseText().trim()) return;
+  var a = ui.prompt("Connect Meta ads (2 of 2)", "Ad account number (digits only, from Ads Manager, top left):", ui.ButtonSet.OK_CANCEL);
+  if (a.getSelectedButton() !== ui.Button.OK) return;
+  var acct = a.getResponseText().replace(/\D/g, "");
+  if (!acct) { ui.alert("That doesn't look like an ad account number. Nothing was saved."); return; }
+  props.setProperty("META_ADS_TOKEN", t.getResponseText().trim());
+  props.setProperty("META_AD_ACCOUNT_ID", acct);
+  var tz = REMINDER_SETTINGS.TIME_ZONE, now = new Date();
+  var res = metaCampaignSpend(Utilities.formatDate(new Date(now.getTime() - 7 * 864e5), tz, "yyyy-MM-dd"),
+                              Utilities.formatDate(new Date(now.getTime() - 864e5), tz, "yyyy-MM-dd"));
+  if (res.error) { ui.alert("Saved, but Meta replied with an error:\n\n" + res.error + "\n\nCheck the token (ads_read) and the ad account number, then run this again."); return; }
+  var total = res.campaigns.reduce(function (n, c) { return n + c.spend; }, 0);
+  ui.alert("Connected ✓\n\nAd spend in the last 7 days: " + money(total, res.currency) + " across " +
+    res.campaigns.filter(function (c) { return c.spend > 0; }).length + " campaigns.\n\nThe yellow rows get their ad spend at the next check (within 15 minutes).");
+}
+
 /** Spend per campaign for the dates (inclusive). */
 function metaCampaignSpend(since, until) {
   var props = PropertiesService.getScriptProperties();
