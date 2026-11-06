@@ -107,23 +107,21 @@ leads per country, Meta ad spend and cost per lead. Run **monthlyReport** any ti
 5. Run **monthlyReport** to check.
 
 ## WhatsApp reminders (W1–W4)
-Two WhatsApp messages in a row, 2 hours and 15 minutes before Day 1 and Day 2 (times in `emails.gs`,
-`WHATSAPP_REMINDERS`). Each sends its own template, then the shared join-link template. They go to everyone in
-the batch with a phone number, once per person, except people who replied **STOP** (read from the
-*WhatsApp replies* tab). "Emails sent" shows them as W1–W4; you get a summary for each, like the emails.
-`SEND_WHATSAPP_REMINDERS` at the top of `reminders.gs` switches them off (`false`).
+One WhatsApp message 2 hours and 15 minutes before Day 1 and Day 2 (times in `emails.gs`, `WHATSAPP_REMINDERS`).
+They go to everyone in the batch with a phone number, once per person, except people who replied **STOP**
+(read from the *WhatsApp replies* tab). "Emails sent" shows them as W1–W4; you get a summary for each, like
+the emails. `SEND_WHATSAPP_REMINDERS` at the top of `reminders.gs` switches them off (`false`).
 
-The wording lives in WhatsApp Manager. Five templates, category **Utility**, language **English** (same as
-`bootcamp_registration`), variable type **Number**:
+The wording lives in WhatsApp Manager. Four templates, category **Utility**, language **English** (same as
+`bootcamp_registration`), variable type **Number**. {{1}} = first name, {{2}} = the batch's **Join link** from
+the Settings tab, filled in each time a reminder goes out (change the link there; the templates stay as they are).
 
 | Template name | Body |
 |---|---|
-| `bootcamp_day1_2hrs` | Hi {{1}} 👋<br><br>Just a quick reminder: Day 1 of the CISSP Domain 1 Bootcamp starts in 2 hours. |
-| `bootcamp_day1_15min` | Hi {{1}}, we go live in 15 minutes! 🎥<br><br>Day 1 of the CISSP Domain 1 Bootcamp is about to start. |
-| `bootcamp_day2_2hrs` | Hi {{1}} 👋<br><br>Day 2 of the CISSP Domain 1 Bootcamp starts in 2 hours. |
-| `bootcamp_day2_15min` | Hi {{1}}, Day 2 goes live in 15 minutes! 🎥<br><br>See you inside. |
-| `bootcamp_join_link` | Here's your joining link:<br>{{1}}<br><br>Reply STOP if you'd rather not get these reminders. |
+| `bootcamp_day1_2hrs` | Hi {{1}} 👋<br><br>Just a quick reminder: Day 1 of the CISSP Domain 1 Bootcamp starts in 2 hours.<br><br>Here's your joining link:<br>{{2}}<br><br>Reply STOP if you'd rather not get these reminders. |
+| `bootcamp_day1_15min` | Hi {{1}}, we go live in 15 minutes! 🎥<br><br>Day 1 of the CISSP Domain 1 Bootcamp is about to start.<br><br>Join here:<br>{{2}}<br><br>Reply STOP if you'd rather not get these reminders. |
+| `bootcamp_day2_2hrs` | Hi {{1}} 👋<br><br>Day 2 of the CISSP Domain 1 Bootcamp starts in 2 hours.<br><br>Here's your joining link:<br>{{2}}<br><br>Reply STOP if you'd rather not get these reminders. |
+| `bootcamp_day2_15min` | Hi {{1}}, Day 2 goes live in 15 minutes! 🎥<br><br>Join here:<br>{{2}}<br><br>See you inside. Reply STOP if you'd rather not get these reminders. |
 
-{{1}} is the first name in the first four, and the batch's join link (Settings tab) in the last one.
-You can change the wording in WhatsApp Manager any time (it's re-approved), but keep the names and {{1}}.
+You can change the wording in WhatsApp Manager any time (it's re-approved), but keep the names, {{1}} and {{2}}.
 Run **testWhatsAppReminders** to send all four to `WHATSAPP_TEST_NUMBER`.

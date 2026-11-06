@@ -31,7 +31,7 @@ var REMINDER_SETTINGS = {
   // Next week's batch: this many hours before Day 1, a new row (same days and times, one week later) is
   // added to the Settings tab. The landing pages switch to the new dates at the same moment. 0 = off.
   NEXT_BATCH_HOURS_BEFORE: 8,
-  SEND_WHATSAPP_REMINDERS: true,  // WhatsApp reminders W1–W4 (emails.gs); needs the 5 approved templates
+  SEND_WHATSAPP_REMINDERS: true,  // WhatsApp reminders W1–W4 (emails.gs); needs the 4 approved templates
   KEEP_OLD_BATCH_DAYS: 7        // a batch's row is removed this many days after its Day 2 (all its emails are done)
 };
 
@@ -289,7 +289,7 @@ function catchUpUnticked(b, e, now, budget) {
 }
 
 /**
- * Sends a WhatsApp reminder (its templates, one after the other) to each person. People who replied STOP,
+ * Sends a WhatsApp reminder (its template(s), one after the other) to each person. People who replied STOP,
  * or have no phone number, are left out; someone registered twice gets it once.
  */
 function sendWhatsAppToPeople(b, e, people, budget) {
@@ -325,7 +325,7 @@ function whatsappOptOuts() {
 }
 
 /**
- * Run this once the 5 templates are approved: sends all four WhatsApp reminders (8 messages) to
+ * Run this once the 4 templates are approved: sends all four WhatsApp reminders to
  * WHATSAPP_TEST_NUMBER (in registrations.gs), with a sample name and the newest batch's join link.
  */
 function testWhatsAppReminders() {
