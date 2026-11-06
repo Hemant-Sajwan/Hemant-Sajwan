@@ -74,15 +74,15 @@ What you do:
 - Google allows about 1,500 emails a day. On Day 1 and Day 2 everyone gets 5 emails, so a batch can have about 300 people.
 - Booking link and the summary address are at the top of `reminders.gs` (`BOOKING_LINK`, `ADMIN_EMAIL`).
 
-## Purchased, Attended and Comments
-Both registrations tabs have **Purchased** and **Attended** tick boxes and a **Comments** column, right after
-**Challenges**. A ticked Purchased box turns the row light green.
-Tick a person's box when they buy or attend (tick one row per person if they registered twice).
+## Purchased, attendance and Comments
+After **Challenges**, both registrations tabs have: **Purchased** (tick box), **Purchased on** (filled in by
+itself when you tick Purchased; unticking clears it), **Attendance Day 1**, **Attendance Day 2**,
+**Attendance at time of sales pitch** (tick boxes) and **Comments**. A ticked Purchased box turns the row light green.
 
 Each yellow **Leads for …** row's first cell lists, one per line: the batch's leads and leads per country,
-the number of purchases and where from, and the number of attendees. Ticking or unticking Purchased / Attended
-updates it within a second or two (and the 15-minute check refreshes it too). Each email counts once.
-Paid buyers' Country is filled in from their phone code.
+the number of purchases and where from, the number of attendees at the sales pitch and where from, and the ad
+spend. Ticking or unticking a box updates it within a second or two (the 15-minute check refreshes it too).
+Each email counts once. Paid buyers' Country is filled in from their phone code.
 
 **Ticking Purchased also stops emails 17–20** (feedback request and the 3 sales emails) for that person;
 they still get email 16 (the replays). One tick covers all of a person's rows. Tick before the emails go out:

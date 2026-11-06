@@ -615,7 +615,7 @@ function writeLeadSummary(b) {
 function batchStats(sh, dates) {
   var head = headings(sh), col = function (h) { return head.indexOf(h); };
   var c = { dates: col("Bootcamp dates"), email: col("Email"), country: col("Country"), phone: col("Phone"),
-            status: col("Status"), bought: col("Purchased"), att: col("Attended") };
+            status: col("Status"), bought: col("Purchased"), att: col("Attendance at time of sales pitch") };
   var vals = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues() : [];
   var people = {}, order = [];
   var ticked = function (v, i) { return i >= 0 && (v[i] === true || /^(true|yes|y)$/i.test(String(v[i]).trim())); };
@@ -647,7 +647,7 @@ function yellowText(dates, st) {
   var lines = ["Leads for " + dates + ": " + st.leads.n].concat(st.leads.list);
   lines.push("No. of purchases: " + st.bought.n);
   if (st.bought.n) lines.push("Purchases from: " + st.bought.list.join(", "));
-  lines.push("No. of attendees: " + st.att.n);
+  lines.push("No. of attendees at sales pitch: " + st.att.n);
   if (st.att.n) lines.push("Attendees from: " + st.att.list.join(", "));
   var ad = savedAdSpend(dates);
   if (ad) {
@@ -777,13 +777,13 @@ function refreshYellowRows(sh) {
   });
 }
 
-/** Ticking or unticking Purchased / Attended updates the yellow row straight away. */
+/** Ticking or unticking Purchased / attendance updates the yellow row straight away. */
 function onEdit(e) {
   try {
     var sh = e && e.range && e.range.getSheet();
     if (!sh || Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).indexOf(sh.getName()) === -1) return;
     var head = headings(sh), c1 = e.range.getColumn(), c2 = c1 + e.range.getNumColumns() - 1;
-    var hit = ["Purchased", "Attended"].some(function (h) { var c = head.indexOf(h) + 1; return c >= c1 && c <= c2; });
+    var hit = TICK_COLUMNS.some(function (h) { var c = head.indexOf(h) + 1; return c >= c1 && c <= c2; });
     var cBought = head.indexOf("Purchased") + 1;
     if (cBought >= c1 && cBought <= c2) notePurchaseDates(sh, head, e.range.getRow(), e.range.getNumRows());
     if (hit) refreshYellowRows(sh);
@@ -806,26 +806,24 @@ function notePurchaseDates(sh, head, row, rows) {
   }
 }
 
-// ===================== Purchased / Attended tick boxes =====================
+// ===================== Purchased / attendance tick boxes =====================
 
 /**
- * Purchased and Attended get tick boxes on every row (a ticked Purchased turns the row light green).
+ * The TICK_COLUMNS (Purchased, Attendance Day 1 / Day 2 / at sales pitch) get tick boxes on every row
+ * (a ticked Purchased turns the row light green).
  * Yellow rows get no tick boxes, and their text is brought up to date. Safe to run again.
  */
 function prepareTrackingColumns(sh) {
   var head = headings(sh), col = function (h) { return head.indexOf(h) + 1; };
-  var cBought = col("Purchased"), cAtt = col("Attended"), cNote = col("Comments");
-  if (!cBought || !cAtt) return;
+  var cBought = col("Purchased"), cNote = col("Comments");
+  var ticks = TICK_COLUMNS.map(col).filter(Boolean);
+  if (!cBought) return;
   var rows = sh.getMaxRows() - 1, last = sh.getLastRow(), tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
   // tick boxes only on rows that have a registration (an empty tick box counts as data in Sheets)
-  if (last > 1) {
-    sh.getRange(2, cBought, last - 1, 1).setDataValidation(tick);
-    sh.getRange(2, cAtt, last - 1, 1).setDataValidation(tick);
-  }
-  if (rows > last - 1) {
-    sh.getRange(last + 1, cBought, rows - (last - 1), 1).clearDataValidations();
-    sh.getRange(last + 1, cAtt, rows - (last - 1), 1).clearDataValidations();
-  }
+  ticks.forEach(function (c) {
+    if (last > 1) sh.getRange(2, c, last - 1, 1).setDataValidation(tick);
+    if (rows > last - 1) sh.getRange(last + 1, c, rows - (last - 1), 1).clearDataValidations();
+  });
   // a ticked Purchased box turns the whole row light green
   var green = "=$" + colLetter(cBought) + "2=TRUE";
   var rules = sh.getConditionalFormatRules().filter(function (r) {
@@ -841,8 +839,7 @@ function prepareTrackingColumns(sh) {
   first.forEach(function (v, i) {
     if (!/^Leads for /.test(String(v[0]))) return;
     var row = i + 2;
-    sh.getRange(row, cBought).clearDataValidations().clearContent();   // no tick boxes in the yellow row
-    sh.getRange(row, cAtt).clearDataValidations().clearContent();
+    ticks.forEach(function (c) { sh.getRange(row, c).clearDataValidations().clearContent(); });   // no tick boxes in the yellow row
     var cPaid = col("Paid/Free?");                             // so the leads text isn't cut off
     if (cPaid && String(sh.getRange(row, cPaid).getValue()) === "FREE") sh.getRange(row, cPaid).clearContent();
     if (cNote && /^=ARRAYFORMULA\(LET\(dts/.test(notes[i][0])) sh.getRange(row, cNote).clearContent();   // the old count

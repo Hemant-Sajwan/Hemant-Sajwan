@@ -80,9 +80,12 @@ var SETTINGS = {
 // Column order for the tabs. Each value is written under the column with the same heading,
 // so you can also drag columns around in the sheet yourself (keep the headings unchanged).
 var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Paid/Free?", "Timestamp", "First name", "Email", "Phone",
-               "Country", "Challenges", "Purchased", "Attended", "Comments",   // Purchased / Attended: tick boxes you fill in
-               "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID",
-               "Purchased on"];   // filled in by itself when you tick Purchased (for the monthly report)
+               "Country", "Challenges", "Purchased",
+               "Purchased on",    // filled in by itself when you tick Purchased (for the monthly report)
+               "Attendance Day 1", "Attendance Day 2", "Attendance at time of sales pitch",
+               "Comments", "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID"];
+// Tick-box columns you fill in
+var TICK_COLUMNS = ["Purchased", "Attendance Day 1", "Attendance Day 2", "Attendance at time of sales pitch"];
 
 /** Receives each registration from the website form. */
 function doPost(e) {
@@ -473,6 +476,8 @@ function setupTabs() {
   if (old && !ss.getSheetByName(SETTINGS.DEFAULT_TAB)) old.setName(SETTINGS.DEFAULT_TAB);
   Object.keys(SETTINGS.TABS).forEach(function (k) {
     var sh = getTab(SETTINGS.TABS[k]);
+    var att = headings(sh).indexOf("Attended") + 1;          // the old single column: its ticks become Day 1
+    if (att && headings(sh).indexOf("Attendance Day 1") === -1) sh.getRange(1, att).setValue("Attendance Day 1");
     addMissingHeadings(sh);
     orderColumns(sh);
     removeEmptyRows(sh);                   // rows with nothing but FREE / empty tick boxes (from an earlier version)
@@ -532,7 +537,7 @@ function appendByHeading(sh, values) {
     }
   });
   var row = writeRow(sh, head.map(function (h) { return h in values ? safeCell(values[h]) : ""; })), tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
-  ["Purchased", "Attended"].forEach(function (h) {             // tick boxes on this row only
+  TICK_COLUMNS.forEach(function (h) {                           // tick boxes on this row only
     var c = head.indexOf(h) + 1;
     if (c) sh.getRange(row, c).setDataValidation(tick);
   });
