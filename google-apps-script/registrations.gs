@@ -499,6 +499,22 @@ function headings(sh) {
   var n = sh.getLastColumn();
   return n ? sh.getRange(1, 1, 1, n).getValues()[0].map(function (h) { return String(h).trim(); }) : [];
 }
+/**
+ * Writes a row just below the last row with real data and returns its number. Empty tick boxes (FALSE) don't
+ * count as data, so rows you add at the bottom (Sheets copies the tick boxes into them) are filled in order.
+ */
+function writeRow(sh, values) {
+  var last = sh.getLastRow(), row = 2;
+  if (last >= 2) {
+    var vals = sh.getRange(1, 1, last, Math.max(sh.getLastColumn(), values.length)).getValues();
+    for (var i = vals.length - 1; i > 0; i--) {
+      if (vals[i].some(function (x) { return x !== "" && x !== false; })) { row = i + 2; break; }
+    }
+  }
+  if (row > sh.getMaxRows()) sh.insertRowsAfter(sh.getMaxRows(), row - sh.getMaxRows());
+  sh.getRange(row, 1, 1, values.length).setValues([values]);
+  return row;
+}
 // Adds one row, putting each value under its heading. A missing heading is added at the end.
 function appendByHeading(sh, values) {
   var head = headings(sh);
@@ -508,8 +524,7 @@ function appendByHeading(sh, values) {
       sh.getRange(1, head.length).setValue(h).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
     }
   });
-  sh.appendRow(head.map(function (h) { return h in values ? safeCell(values[h]) : ""; }));
-  var row = sh.getLastRow(), tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
+  var row = writeRow(sh, head.map(function (h) { return h in values ? safeCell(values[h]) : ""; })), tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
   ["Purchased", "Attended"].forEach(function (h) {             // tick boxes on this row only
     var c = head.indexOf(h) + 1;
     if (c) sh.getRange(row, c).setDataValidation(tick);
@@ -554,14 +569,16 @@ function orderColumns(sh) {
   });
 }
 /**
- * Deletes rows that hold nothing but "FREE", empty tick boxes (FALSE) or blanks, e.g. the ones an earlier version
+ * Deletes rows that hold "FREE" and otherwise only empty tick boxes (FALSE) or blanks, e.g. the ones an earlier version
  * created down to row 1000. Rows with anything else in them are kept (and move up).
  */
 function removeEmptyRows(sh) {
   var last = sh.getLastRow(), width = sh.getLastColumn();
   if (last < 2 || width < 1) return;
   var vals = sh.getRange(2, 1, last - 1, width).getValues();
-  var empty = function (v) { return v.every(function (x) { return x === "" || x === false || x === "FREE" || String(x) === "FALSE"; }); };
+  var empty = function (v) {                                   // only "FREE" + empty tick boxes; blank rows you add stay
+    return v.indexOf("FREE") !== -1 && v.every(function (x) { return x === "" || x === false || x === "FREE" || String(x) === "FALSE"; });
+  };
   for (var i = vals.length - 1; i >= 0; ) {
     if (!empty(vals[i])) { i--; continue; }
     var end = i;

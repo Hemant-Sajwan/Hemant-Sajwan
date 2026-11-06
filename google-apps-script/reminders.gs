@@ -531,9 +531,9 @@ function writeLeadSummary(b) {
   if (!sh) return "";
   props.setProperty(done, "1");
   var text = yellowText(b.dates, batchStats(sh, b.dates));
-  sh.appendRow([text]);
-  sh.getRange(sh.getLastRow(), 1, 1, Math.max(headings(sh).length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
-  sh.getRange(sh.getLastRow(), 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);   // one item per line
+  var row = writeRow(sh, [text]);
+  sh.getRange(row, 1, 1, Math.max(headings(sh).length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
+  sh.getRange(row, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);   // one item per line
   prepareTrackingColumns(sh);
   return text;
 }
