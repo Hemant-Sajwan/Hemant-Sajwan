@@ -75,7 +75,8 @@ What you do:
 - Booking link and the summary address are at the top of `reminders.gs` (`BOOKING_LINK`, `ADMIN_EMAIL`).
 
 ## Purchased, Attended and Comments
-Both registrations tabs have **Purchased** and **Attended** tick boxes and a **Comments** column at the end.
+Both registrations tabs have **Purchased** and **Attended** tick boxes and a **Comments** column, right after
+**Challenges**. A ticked Purchased box turns the row light green.
 Tick a person's box when they buy or attend (tick one row per person if they registered twice).
 
 Each yellow **Leads for …** row has a live count in its **Comments** cell, e.g.
@@ -87,6 +88,11 @@ columns it counts.) Paid buyers' Country is filled in from their phone code.
 they still get email 16 (the replays). One tick covers all of a person's rows. Tick before the emails go out:
 email 17 goes 15 hours after Day 2 starts (morning batch: 2:00 AM IST the next day; evening: 10:30 AM),
 email 18 two hours later. A later tick still stops the emails that haven't gone yet.
+The "Emails sent" column shows a skipped email as e.g. `17p`.
+
+**Ticked by mistake?** Just untick it. The tick is only looked at when an email is due, so unticking before then
+changes nothing. If an email was already skipped, it is sent at the next check (within 15 minutes), as long as
+that's within 24 hours of its send time, and you get a notice.
 
 ## Monthly report (1st of each month, 9 AM IST)
 An email to support@ and a row in the **Monthly summary** tab: last month's total leads (each email once),
