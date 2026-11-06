@@ -127,7 +127,7 @@ function runEmailSchedule() {
         var missing = (e.needs || []).filter(function (k) { return !b[k]; });
         if (missing.length) { askForLinkOnce(b, e, missing); return; }
         var people = batchRows(b).filter(function (r) {
-          return r.ts && r.ts < due && !hasSent(r, e.id) && !(e.promo && r.unsub);
+          return r.ts && r.ts < due && !hasSent(r, e.id) && !(e.promo && r.unsub) && !(e.notIfPurchased && r.purchased);
         });
         var res = sendToPeople(b, e, people, budget);
         if (res.stoppedEarly) outOfTime = true; else markDone(b, e);
@@ -673,7 +673,7 @@ function batchRows(b) {
   var head = headings(sh);
   var col = function (h) { return head.indexOf(h); };
   var c = { dates: col("Bootcamp dates"), ts: col("Timestamp"), name: col("First name"), email: col("Email"),
-            sent: col("Emails sent"), unsub: col("Unsubscribed"), status: col("Status") };
+            sent: col("Emails sent"), unsub: col("Unsubscribed"), status: col("Status"), bought: col("Purchased") };
   var want = normDates(b.dates);
   var vals = sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues();
   var out = [];
@@ -685,8 +685,13 @@ function batchRows(b) {
     var name = String(v[c.name]).trim();
     out.push({ sheet: sh, row: i + 2, sentCol: c.sent + 1, ts: v[c.ts] instanceof Date ? v[c.ts] : toDate(v[c.ts]),
                name: name, firstName: firstNameOf(name), email: email,
-               sent: sentText(c.sent >= 0 ? v[c.sent] : ""), unsub: c.unsub >= 0 && !!v[c.unsub] });
+               sent: sentText(c.sent >= 0 ? v[c.sent] : ""), unsub: c.unsub >= 0 && !!v[c.unsub],
+               purchased: c.bought >= 0 && (v[c.bought] === true || /^(true|yes|y)$/i.test(String(v[c.bought]).trim())) });
   });
+  // ticked "Purchased" on any of a person's rows counts for all of them (people who registered twice)
+  var bought = {};
+  out.forEach(function (r) { if (r.purchased) bought[r.email] = true; });
+  out.forEach(function (r) { r.purchased = !!bought[r.email]; });
   return out;
 }
 
