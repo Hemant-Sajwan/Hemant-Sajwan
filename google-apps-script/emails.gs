@@ -689,3 +689,18 @@ Let’s talk it through, and if it’s the right fit - we get started.
 – Hemant`
   }
 ];
+
+// ===================== WhatsApp reminders =====================
+// The wording lives in WhatsApp Manager (approved templates); here are only the timings and template names.
+// Each reminder is sent as two messages in a row: its own template ({{1}} = first name), then the shared
+// join-link template ({{1}} = the batch's join link). Template names must match WhatsApp Manager exactly.
+var WHATSAPP_REMINDERS = [
+  { id: "W1", whatsapp: true, anchor: "day1", minutes: -120, needs: ["join_link"], subject: "WhatsApp: Day 1 starts in 2 hours",
+    templates: [{ name: "bootcamp_day1_2hrs", params: ["first_name"] }, { name: "bootcamp_join_link", params: ["join_link"] }] },
+  { id: "W2", whatsapp: true, anchor: "day1", minutes: -15, needs: ["join_link"], subject: "WhatsApp: Day 1 live in 15 minutes",
+    templates: [{ name: "bootcamp_day1_15min", params: ["first_name"] }, { name: "bootcamp_join_link", params: ["join_link"] }] },
+  { id: "W3", whatsapp: true, anchor: "day2", minutes: -120, needs: ["join_link"], subject: "WhatsApp: Day 2 starts in 2 hours",
+    templates: [{ name: "bootcamp_day2_2hrs", params: ["first_name"] }, { name: "bootcamp_join_link", params: ["join_link"] }] },
+  { id: "W4", whatsapp: true, anchor: "day2", minutes: -15, needs: ["join_link"], subject: "WhatsApp: Day 2 live in 15 minutes",
+    templates: [{ name: "bootcamp_day2_15min", params: ["first_name"] }, { name: "bootcamp_join_link", params: ["join_link"] }] }
+];
