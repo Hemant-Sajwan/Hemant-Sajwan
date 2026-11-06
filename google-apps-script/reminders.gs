@@ -31,6 +31,9 @@ var REMINDER_SETTINGS = {
   // Next week's batch: this many hours before Day 1, a new row (same days and times, one week later) is
   // added to the Settings tab. The landing pages switch to the new dates at the same moment. 0 = off.
   NEXT_BATCH_HOURS_BEFORE: 8,
+  // Meta ad spend per bootcamp: a campaign counts toward a batch if its name contains one of these words
+  // (not case-sensitive). Spend that matches neither is listed in the weekly "Next … batch added" email.
+  AD_CAMPAIGNS: { morning: ["NZ", "Australia"], evening: ["UAE", "Saudi", "India"] },
   SEND_WHATSAPP_REMINDERS: true,  // WhatsApp reminders W1–W4 (emails.gs); needs the 4 approved templates
   KEEP_OLD_BATCH_DAYS: 7        // a batch's row is removed this many days after its Day 2 (all its emails are done)
 };
@@ -118,6 +121,7 @@ function runEmailSchedule() {
   var budget = function () { return Date.now() - started < 4.5 * 60 * 1000; };   // Google allows 6 min per run
   try {
     addNextBatches();
+    try { refreshAdSpend(); } catch (err) { console.error(err); }       // ad spend of switched batches (hourly until final)
     try { refreshYellowRows(); } catch (err) { console.error(err); }   // backup for the instant update when you tick a box
     var now = new Date();
     readBatches().forEach(function (b) {
@@ -591,11 +595,15 @@ function writeLeadSummary(b) {
   var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(b.tab);
   if (!sh) return "";
   props.setProperty(done, "1");
+  try { updateAdSpend(b, true); } catch (err) { console.error(err); }
   var text = yellowText(b.dates, batchStats(sh, b.dates));
   var row = writeRow(sh, [text]);
   sh.getRange(row, 1, 1, Math.max(headings(sh).length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
   sh.getRange(row, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);   // one item per line
   prepareTrackingColumns(sh);
+  var ad = savedAdSpend(b.dates);
+  if (ad && ad.other) text += "\n\nAd spend not matched to a bootcamp (" + ad.since + " to " + ad.until + "): " +
+    money(ad.other, ad.currency) + " – " + ad.otherNames.join(", ") + ". To count it, add a word from its name to AD_CAMPAIGNS in reminders.gs.";
   return text;
 }
 
@@ -640,7 +648,76 @@ function yellowText(dates, st) {
   if (st.bought.n) lines.push("Purchases from: " + st.bought.list.join(", "));
   lines.push("No. of attendees: " + st.att.n);
   if (st.att.n) lines.push("Attendees from: " + st.att.list.join(", "));
+  var ad = savedAdSpend(dates);
+  if (ad) {
+    lines.push("Ad spend: " + money(ad.spend, ad.currency) + (ad.final ? "" : " (so far)"));
+    if (st.leads.n) lines.push("Cost per lead: " + money(ad.spend / st.leads.n, ad.currency));
+  }
   return lines.join("\n");
+}
+
+// ===================== Meta ad spend per bootcamp =====================
+// A batch's spend = its campaigns (AD_CAMPAIGNS) over the 7 days before its Day 1: after each weekly switch
+// the ads already bring people to the next dates. Read from Meta at the switch and then hourly until a day
+// after Day 1, when the figure is final. Saved in Script Properties, so ticking boxes never calls Meta.
+
+function savedAdSpend(dates) {
+  var v = PropertiesService.getScriptProperties().getProperty("ADSPEND|" + normDates(dates));
+  return v ? JSON.parse(v) : null;
+}
+
+/** Reads the batch's ad spend from Meta (unless it's final, or was read in the last hour and `force` isn't set). */
+function updateAdSpend(b, force) {
+  var props = PropertiesService.getScriptProperties(), key = "ADSPEND|" + normDates(b.dates);
+  var old = savedAdSpend(b.dates), now = Date.now();
+  if (old && (old.final || (!force && now - old.at < 3600e3))) return old;
+  var tz = REMINDER_SETTINGS.TIME_ZONE;
+  var since = Utilities.formatDate(new Date(b.day1.getTime() - 7 * 864e5), tz, "yyyy-MM-dd");
+  var until = Utilities.formatDate(new Date(b.day1.getTime() - 864e5), tz, "yyyy-MM-dd");
+  var res = metaCampaignSpend(since, until);
+  if (res.error) return old;                                       // not connected, or Meta failed: try again later
+  var words = (REMINDER_SETTINGS.AD_CAMPAIGNS || {})[b.key] || [], all = REMINDER_SETTINGS.AD_CAMPAIGNS || {};
+  var has = function (name, list) { return list.some(function (w) { return name.toLowerCase().indexOf(String(w).toLowerCase()) !== -1; }); };
+  var out = { spend: 0, currency: res.currency, other: 0, otherNames: [], since: since, until: until, at: now,
+              final: now > b.day1.getTime() + 864e5 };
+  res.campaigns.forEach(function (c) {
+    if (has(c.name, words)) out.spend += c.spend;
+    else if (!Object.keys(all).some(function (k) { return has(c.name, all[k]); }) && c.spend > 0) {
+      out.other += c.spend; out.otherNames.push(c.name);
+    }
+  });
+  props.setProperty(key, JSON.stringify(out));
+  return out;
+}
+
+/** Keeps the ad spend of batches that have switched up to date (hourly, until final). */
+function refreshAdSpend() {
+  var latest = {}, batches = readBatches();
+  batches.forEach(function (b) { if (!latest[b.key] || b.day1 > latest[b.key].day1) latest[b.key] = b; });
+  batches.forEach(function (b) { if (b !== latest[b.key]) updateAdSpend(b, false); });
+}
+
+/** Spend per campaign for the dates (inclusive). */
+function metaCampaignSpend(since, until) {
+  var props = PropertiesService.getScriptProperties();
+  var token = props.getProperty("META_ADS_TOKEN"), acct = String(props.getProperty("META_AD_ACCOUNT_ID") || "").replace(/\D/g, "");
+  if (!token || !acct) return { error: "Meta ad account not connected yet" };
+  try {
+    var url = "https://graph.facebook.com/v21.0/act_" + acct + "/insights?level=campaign&fields=campaign_name,spend,account_currency&limit=500" +
+      "&time_range=" + encodeURIComponent(JSON.stringify({ since: since, until: until })) + "&access_token=" + encodeURIComponent(token);
+    var out = { campaigns: [], currency: "INR" };
+    for (var page = 0; url && page < 10; page++) {
+      var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+      var body = JSON.parse(res.getContentText() || "{}");
+      if (res.getResponseCode() !== 200) return { error: (body.error && body.error.message) || "Meta returned " + res.getResponseCode() };
+      (body.data || []).forEach(function (r) {
+        out.campaigns.push({ name: String(r.campaign_name || ""), spend: +r.spend || 0 });
+        if (r.account_currency) out.currency = r.account_currency;
+      });
+      url = body.paging && body.paging.next;
+    }
+    return out;
+  } catch (err) { return { error: String(err) }; }
 }
 
 /** Brings the yellow rows of a tab (or of both registrations tabs) up to date. Only changed cells are written. */
