@@ -94,6 +94,14 @@ The "Emails sent" column shows a skipped email as e.g. `17p`.
 changes nothing. If an email was already skipped, it is sent at the next check (within 15 minutes), as long as
 that's within 24 hours of its send time, and you get a notice.
 
+## Ad spend per bootcamp
+Each yellow row also shows **Ad spend** and **Cost per lead** for that batch, once the Meta token is set up
+(see below). A batch's spend = its campaigns over the 7 days before its Day 1 (after each switch, the ads
+already bring people to the next dates). It shows "(so far)" until a day after Day 1, then it's final.
+Campaigns are matched by words in their names, set in `AD_CAMPAIGNS` at the top of `reminders.gs`:
+morning = "NZ", "Australia"; evening = "UAE", "Saudi", "India". Spend from campaigns that match neither is
+listed in the weekly "Next … batch added" email.
+
 ## Monthly report (1st of each month, 9 AM IST)
 An email to support@ and a row in the **Monthly summary** tab: last month's total leads (each email once),
 leads per country, Meta ad spend and cost per lead. Run **monthlyReport** any time to see the previous month.
