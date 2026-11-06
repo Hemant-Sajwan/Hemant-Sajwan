@@ -334,7 +334,8 @@ function whatsappOptOuts() {
  */
 function testWhatsAppReminders() {
   var b = readBatches().sort(function (x, y) { return y.day1 - x.day1; })[0];
-  var vars = { first_name: "Hemant", join_link: (b && b.join_link) || "https://example.com/join" };
+  var vars = { first_name: "Hemant", join_link: (b && b.join_link) || "https://example.com/join",
+               time: (b && b.time) || "7:30 PM IST (India) / 6 PM GST (UAE)" };
   WHATSAPP_REMINDERS.forEach(function (e) {
     e.templates.forEach(function (t, j) {
       if (j) Utilities.sleep(1500);
