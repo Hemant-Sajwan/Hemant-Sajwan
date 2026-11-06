@@ -8,6 +8,7 @@
  *   - A blank line starts a new paragraph.
  *   - Lines starting with "- " become a bullet list.
  *   - **text** is bold.  [text](link) is a link, e.g. [Book a call]({booking_link})
+ *   - notIfPurchased: true = not sent to people whose "Purchased" box is ticked (emails 17–20).
  *   - {first_name} {dates} {time} {join_link} {replay_link_day1} {replay_link_day2} {booking_link}
  *     are filled in for each person (dates, time and links come from the Settings tab).
  *   - Promotional emails (promo: true) get an "unsubscribe" line automatically, and are
@@ -491,7 +492,7 @@ All the best,
 Hemant`
   },
   {
-    id: 17, anchor: "day2", minutes: 15 * 60,
+    id: 17, anchor: "day2", minutes: 15 * 60, notIfPurchased: true,
     subject: "Quick Favor — Just need your 2 mins, please!",
     body: `Hi {first_name},
 
@@ -510,7 +511,7 @@ Warm regards,
 Hemant`
   },
   {
-    id: 18, anchor: "day2", minutes: 17 * 60, promo: true,
+    id: 18, anchor: "day2", minutes: 17 * 60, promo: true, notIfPurchased: true,
     subject: "What comes AFTER Domain 1?",
     body: `Hi {first_name},
 
@@ -556,7 +557,7 @@ Best,
 Hemant`
   },
   {
-    id: 19, anchor: "day2", minutes: 41 * 60, promo: true,
+    id: 19, anchor: "day2", minutes: 41 * 60, promo: true, notIfPurchased: true,
     subject: "Speed. Structure. Support. Or the long road alone.",
     body: `Hi {first_name},
 
@@ -608,7 +609,7 @@ The other is guided - and it leads to results.
 - Hemant`
   },
   {
-    id: 20, anchor: "day2", minutes: 65 * 60, promo: true,
+    id: 20, anchor: "day2", minutes: 65 * 60, promo: true, notIfPurchased: true,
     subject: "If you’re still on the fence, read this.",
     body: `Hi {first_name},
 

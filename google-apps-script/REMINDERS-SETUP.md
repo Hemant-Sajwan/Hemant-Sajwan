@@ -83,6 +83,11 @@ Each yellow **Leads for …** row has a live count in its **Comments** cell, e.g
 and updates as soon as you tick or untick someone. (It lives in Comments because a count can't sit in the
 columns it counts.) Paid buyers' Country is filled in from their phone code.
 
+**Ticking Purchased also stops emails 17–20** (feedback request and the 3 sales emails) for that person;
+they still get email 16 (the replays). One tick covers all of a person's rows. Tick before the emails go out:
+email 17 goes 15 hours after Day 2 starts (morning batch: 2:00 AM IST the next day; evening: 10:30 AM),
+email 18 two hours later. A later tick still stops the emails that haven't gone yet.
+
 ## Monthly report (1st of each month, 9 AM IST)
 An email to support@ and a row in the **Monthly summary** tab: last month's total leads (each email once),
 leads per country, Meta ad spend and cost per lead. Run **monthlyReport** any time to see the previous month.
