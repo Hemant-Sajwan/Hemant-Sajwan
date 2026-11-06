@@ -784,8 +784,26 @@ function onEdit(e) {
     if (!sh || Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; }).indexOf(sh.getName()) === -1) return;
     var head = headings(sh), c1 = e.range.getColumn(), c2 = c1 + e.range.getNumColumns() - 1;
     var hit = ["Purchased", "Attended"].some(function (h) { var c = head.indexOf(h) + 1; return c >= c1 && c <= c2; });
+    var cBought = head.indexOf("Purchased") + 1;
+    if (cBought >= c1 && cBought <= c2) notePurchaseDates(sh, head, e.range.getRow(), e.range.getNumRows());
     if (hit) refreshYellowRows(sh);
   } catch (err) { console.error(err); }
+}
+
+/** Ticking Purchased notes today's date in "Purchased on" (unticking clears it), for the monthly report. */
+function notePurchaseDates(sh, head, row, rows) {
+  var cBought = head.indexOf("Purchased") + 1, cOn = head.indexOf("Purchased on") + 1, cEmail = head.indexOf("Email") + 1;
+  if (!cOn) {                                                        // add the column the first time
+    cOn = head.length + 1;
+    sh.getRange(1, cOn).setValue("Purchased on").setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
+  }
+  var ticks = sh.getRange(row, cBought, rows, 1).getValues(), on = sh.getRange(row, cOn, rows, 1).getValues();
+  var emails = cEmail ? sh.getRange(row, cEmail, rows, 1).getValues() : ticks;
+  for (var i = 0; i < rows; i++) {
+    if (row + i < 2 || !String(emails[i][0]).trim()) continue;
+    if (ticks[i][0] === true && !on[i][0]) sh.getRange(row + i, cOn).setValue(new Date()).setNumberFormat("dd mmm yyyy");
+    else if (ticks[i][0] !== true && on[i][0]) sh.getRange(row + i, cOn).clearContent();
+  }
 }
 
 // ===================== Purchased / Attended tick boxes =====================
@@ -847,45 +865,64 @@ function monthlyReport() {
   var thisMonth = Utilities.parseDate(Utilities.formatDate(now, tz, "yyyy-MM") + "-01 00:00", tz, "yyyy-MM-dd HH:mm");
   var lastMonth = Utilities.parseDate(Utilities.formatDate(new Date(thisMonth.getTime() - 864e5), tz, "yyyy-MM") + "-01 00:00", tz, "yyyy-MM-dd HH:mm");
   var label = Utilities.formatDate(lastMonth, tz, "MMMM yyyy");
-  var seen = {}, byCountry = {}, total = 0;
+  var inMonth = function (d) { return d && d >= lastMonth && d < thisMonth; };
+  var leads = { seen: {}, by: {}, n: 0 }, buys = { seen: {}, by: {}, n: 0 };
+  var add = function (t, email, country) {
+    if (t.seen[email]) return;
+    t.seen[email] = true; t.n++; t.by[country] = (t.by[country] || 0) + 1;
+  };
   Object.keys(SETTINGS.TABS).forEach(function (k) {
     var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SETTINGS.TABS[k]);
     if (!sh || sh.getLastRow() < 2) return;
     var head = headings(sh), col = function (h) { return head.indexOf(h); };
-    var c = { ts: col("Timestamp"), email: col("Email"), country: col("Country"), phone: col("Phone"), status: col("Status") };
+    var c = { ts: col("Timestamp"), email: col("Email"), country: col("Country"), phone: col("Phone"), status: col("Status"),
+              bought: col("Purchased"), on: col("Purchased on") };
     sh.getRange(2, 1, sh.getLastRow() - 1, head.length).getValues().forEach(function (v) {
       var ts = v[c.ts] instanceof Date ? v[c.ts] : toDate(v[c.ts]);
       var email = String(v[c.email]).trim().toLowerCase();
-      if (!ts || ts < lastMonth || ts >= thisMonth || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return;
-      if (seen[email] || /payment pending/i.test(String(v[c.status]))) return;
-      seen[email] = true;
-      total++;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || /payment pending/i.test(String(v[c.status]))) return;
       var country = c.country >= 0 && String(v[c.country]).trim() || countryFromPhone(c.phone >= 0 ? v[c.phone] : "");
       country = SHORT_COUNTRY[country] || country;
-      byCountry[country] = (byCountry[country] || 0) + 1;
+      if (inMonth(ts)) add(leads, email, country);
+      var ticked = c.bought >= 0 && (v[c.bought] === true || /^(true|yes|y)$/i.test(String(v[c.bought]).trim()));
+      if (ticked) {
+        var on = c.on >= 0 && v[c.on] instanceof Date ? v[c.on] : ts;      // older ticks have no date: registration date
+        if (inMonth(on)) add(buys, email, country);
+      }
     });
   });
-  var countries = Object.keys(byCountry).sort(function (x, y) { return byCountry[y] - byCountry[x] || (x < y ? -1 : 1); })
-    .map(function (k) { return k + ": " + byCountry[k]; });
+  var list = function (t) {
+    return Object.keys(t.by).sort(function (x, y) { return t.by[y] - t.by[x] || (x < y ? -1 : 1); })
+      .map(function (k) { return k + ": " + t.by[k]; }).join(", ");
+  };
   var ads = metaAdSpend(Utilities.formatDate(lastMonth, tz, "yyyy-MM-dd"),
                         Utilities.formatDate(new Date(thisMonth.getTime() - 864e5), tz, "yyyy-MM-dd"));
-  var spendText = ads.error ? "not available (" + ads.error + ")" : money(ads.spend, ads.currency);
-  var perLead = !ads.error && total ? money(ads.spend / total, ads.currency) : "";
+  var spend = ads.error ? "" : money(ads.spend, ads.currency);
+  var perLead = !ads.error && leads.n ? money(ads.spend / leads.n, ads.currency) : "";
 
   var lines = ["Monthly report: " + label, "",
-    "Total leads: " + total, "Leads per country: " + (countries.join(", ") || "none"), "",
-    "Meta ad spend: " + spendText + (perLead ? "\nCost per lead: " + perLead : ""), "",
-    "Each email address is counted once; unfinished payments are not counted."];
-  notifyAdmin(label + ": " + total + " leads" + (ads.error ? "" : ", " + money(ads.spend, ads.currency) + " ad spend"), lines.join("\n"));
+    "Meta ad spend: " + (spend || "not available (" + ads.error + ")"),
+    "Total leads: " + leads.n + (perLead ? "  (cost per lead: " + perLead + ")" : ""),
+    "Leads per country: " + (list(leads) || "none"),
+    "Total purchases: " + buys.n,
+    "Purchases per country: " + (list(buys) || "none"), "",
+    "Leads: each email address counted once, by registration date; unfinished payments not counted.",
+    "Purchases: people ticked Purchased, by the date the box was ticked."];
+  var plural = function (n, word) { return n + " " + word + (n === 1 ? "" : "s"); };
+  notifyAdmin(label + ": " + plural(leads.n, "lead") + ", " + plural(buys.n, "purchase") + (spend ? ", " + spend + " ad spend" : ""), lines.join("\n"));
 
+  var HEAD = ["Month", "Total leads", "Leads per country", "Purchases", "Purchases per country", "Meta ad spend", "Cost per lead"];
   var ss = SpreadsheetApp.getActiveSpreadsheet(), sum = ss.getSheetByName("Monthly summary");
   if (!sum) {
     sum = ss.insertSheet("Monthly summary");
-    sum.appendRow(["Month", "Total leads", "Leads per country", "Meta ad spend", "Cost per lead"]);
-    sum.getRange(1, 1, 1, 5).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
+    sum.appendRow(HEAD);
     sum.setFrozenRows(1);
+  } else if (String(sum.getRange(1, 4).getValue()) === "Meta ad spend") {
+    sum.insertColumnsAfter(3, 2);                                    // older tab: make room for the purchases
+    sum.getRange(1, 1, 1, HEAD.length).setValues([HEAD]);
   }
-  sum.appendRow([label, total, countries.join(", "), ads.error ? "n/a" : money(ads.spend, ads.currency), perLead || "n/a"]);
+  sum.getRange(1, 1, 1, HEAD.length).setFontWeight("bold").setBackground("#004AAD").setFontColor("#ffffff");
+  sum.appendRow([label, leads.n, list(leads), buys.n, list(buys), spend || "n/a", perLead || "n/a"]);
 }
 
 /** Total Meta ad spend for the dates (inclusive), read with a read-only token. */

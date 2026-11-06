@@ -103,8 +103,11 @@ morning = "NZ", "Australia"; evening = "UAE", "Saudi", "India". Spend from campa
 listed in the weekly "Next … batch added" email.
 
 ## Monthly report (1st of each month, 9 AM IST)
-An email to support@ and a row in the **Monthly summary** tab: last month's total leads (each email once),
-leads per country, Meta ad spend and cost per lead. Run **monthlyReport** any time to see the previous month.
+An email to support@ and a row in the **Monthly summary** tab for last month: Meta ad spend, total leads (each
+email once, by registration date), leads per country, cost per lead, total purchases and purchases per country.
+A purchase counts in the month you ticked **Purchased**: ticking it fills in **Purchased on** (far right) by
+itself, unticking clears it. Ticks from before that column existed count by the registration date.
+Run **monthlyReport** any time to see the previous month.
 
 **Ad spend** needs a read-only Meta token (once):
 1. business.facebook.com → **Business settings → Users → System users → Add**: name `Reports`, role **Employee**.
