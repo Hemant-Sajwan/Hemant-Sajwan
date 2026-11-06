@@ -692,15 +692,16 @@ Let’s talk it through, and if it’s the right fit - we get started.
 
 // ===================== WhatsApp reminders =====================
 // The wording lives in WhatsApp Manager (approved templates); here are only the timings and template names.
-// Each reminder is one message: {{1}} = first name, {{2}} = the batch's join link (Settings tab).
+// Each reminder is one message. 2-hour ones: {{1}} first name, {{2}} the batch's time, {{3}} join link;
+// 15-minute ones: {{1}} first name, {{2}} join link (all from the Settings tab).
 // Template names must match WhatsApp Manager exactly.
 var WHATSAPP_REMINDERS = [
   { id: "W1", whatsapp: true, anchor: "day1", minutes: -120, needs: ["join_link"], subject: "WhatsApp: Day 1 starts in 2 hours",
-    templates: [{ name: "bootcamp_day1_2hrs", params: ["first_name", "join_link"] }] },
+    templates: [{ name: "bootcamp_day1_2hrs", params: ["first_name", "time", "join_link"] }] },
   { id: "W2", whatsapp: true, anchor: "day1", minutes: -15, needs: ["join_link"], subject: "WhatsApp: Day 1 live in 15 minutes",
     templates: [{ name: "bootcamp_day1_15min", params: ["first_name", "join_link"] }] },
   { id: "W3", whatsapp: true, anchor: "day2", minutes: -120, needs: ["join_link"], subject: "WhatsApp: Day 2 starts in 2 hours",
-    templates: [{ name: "bootcamp_day2_2hrs", params: ["first_name", "join_link"] }] },
+    templates: [{ name: "bootcamp_day2_2hrs", params: ["first_name", "time", "join_link"] }] },
   { id: "W4", whatsapp: true, anchor: "day2", minutes: -15, needs: ["join_link"], subject: "WhatsApp: Day 2 live in 15 minutes",
     templates: [{ name: "bootcamp_day2_15min", params: ["first_name", "join_link"] }] }
 ];
