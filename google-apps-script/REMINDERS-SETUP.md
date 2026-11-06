@@ -113,15 +113,16 @@ They go to everyone in the batch with a phone number, once per person, except pe
 the emails. `SEND_WHATSAPP_REMINDERS` at the top of `reminders.gs` switches them off (`false`).
 
 The wording lives in WhatsApp Manager. Four templates, category **Utility**, language **English** (same as
-`bootcamp_registration`), variable type **Number**. {{1}} = first name, {{2}} = the batch's **Join link** from
-the Settings tab, filled in each time a reminder goes out (change the link there; the templates stay as they are).
+`bootcamp_registration`), variable type **Number**. {{1}} = first name. In the 2-hour ones {{2}} = the batch's
+**Time (shown in emails)** and {{3}} = its **Join link**; in the 15-minute ones {{2}} = the Join link. All come from
+the Settings tab each time a reminder goes out (change them there; the templates stay as they are).
 
 | Template name | Body |
 |---|---|
-| `bootcamp_day1_2hrs` | Hi {{1}} 👋<br><br>Just a quick reminder: Day 1 of the CISSP Domain 1 Bootcamp starts in 2 hours.<br><br>Here's your joining link:<br>{{2}}<br><br>Reply STOP if you'd rather not get these reminders. |
+| `bootcamp_day1_2hrs` | Hi {{1}} 👋<br><br>Just a quick reminder: Day 1 of the CISSP Domain 1 Bootcamp starts in 2 hours, at {{2}}.<br><br>Here's your joining link:<br>{{3}}<br><br>Reply STOP if you'd rather not get these reminders. |
 | `bootcamp_day1_15min` | Hi {{1}}, we go live in 15 minutes! 🎥<br><br>Day 1 of the CISSP Domain 1 Bootcamp is about to start.<br><br>Join here:<br>{{2}}<br><br>Reply STOP if you'd rather not get these reminders. |
-| `bootcamp_day2_2hrs` | Hi {{1}} 👋<br><br>Day 2 of the CISSP Domain 1 Bootcamp starts in 2 hours.<br><br>Here's your joining link:<br>{{2}}<br><br>Reply STOP if you'd rather not get these reminders. |
+| `bootcamp_day2_2hrs` | Hi {{1}} 👋<br><br>Day 2 of the CISSP Domain 1 Bootcamp starts in 2 hours, at {{2}}.<br><br>Here's your joining link:<br>{{3}}<br><br>Reply STOP if you'd rather not get these reminders. |
 | `bootcamp_day2_15min` | Hi {{1}}, Day 2 goes live in 15 minutes! 🎥<br><br>Join here:<br>{{2}}<br><br>See you inside. Reply STOP if you'd rather not get these reminders. |
 
-You can change the wording in WhatsApp Manager any time (it's re-approved), but keep the names, {{1}} and {{2}}.
+You can change the wording in WhatsApp Manager any time (it's re-approved), but keep the names and the {{ }} numbers.
 Run **testWhatsAppReminders** to send all four to `WHATSAPP_TEST_NUMBER`.
