@@ -116,6 +116,7 @@ function runEmailSchedule() {
       if (outOfTime) return;
       // ---- batch-wide emails ----
       EMAILS.forEach(function (e) {
+        if (!outOfTime && e.notIfPurchased && isDone(b, e) && catchUpUnticked(b, e, now, budget)) outOfTime = true;
         if (outOfTime || e.anchor === "registration" || isDone(b, e)) return;
         var due = dueTime(b, e);
         if (!due || due.getTime() > now.getTime() + 30 * 1000) return;           // not due yet
@@ -126,8 +127,12 @@ function runEmailSchedule() {
         if (e.minutes >= 0 && now.getTime() - due.getTime() > REMINDER_SETTINGS.LATE_LIMIT_HOURS * 3600e3) { markDone(b, e); return; }
         var missing = (e.needs || []).filter(function (k) { return !b[k]; });
         if (missing.length) { askForLinkOnce(b, e, missing); return; }
-        var people = batchRows(b).filter(function (r) {
+        var rows = batchRows(b);
+        var people = rows.filter(function (r) {
           return r.ts && r.ts < due && !hasSent(r, e.id) && !(e.promo && r.unsub) && !(e.notIfPurchased && r.purchased);
+        });
+        if (e.notIfPurchased) rows.forEach(function (r) {                    // "17p" = skipped because Purchased was ticked
+          if (r.ts && r.ts < due && r.purchased && !hasSent(r, e.id) && !hasSent(r, e.id + "p")) addSentMark(r, e.id + "p");
         });
         var res = sendToPeople(b, e, people, budget);
         if (res.stoppedEarly) outOfTime = true; else markDone(b, e);
@@ -253,6 +258,26 @@ function sendToPeople(b, e, people, budget) {
   }
   if (!REMINDER_SETTINGS.KEEP_COPIES_IN_SENT && res.sent.length) removeSentCopies(e.subject, res.startedAt, res.sent);
   return res;
+}
+
+/**
+ * Purchased ticked by mistake: someone skipped for email 17–20 ("17p") whose tick is gone again gets that
+ * email on the next check, if it's no more than LATE_LIMIT_HOURS (24) after its send time.
+ * Returns true if it ran out of time.
+ */
+function catchUpUnticked(b, e, now, budget) {
+  var due = dueTime(b, e);
+  if (!due || now.getTime() - due.getTime() > REMINDER_SETTINGS.LATE_LIMIT_HOURS * 3600e3) return false;
+  var people = batchRows(b).filter(function (r) {
+    return hasSent(r, e.id + "p") && !r.purchased && !hasSent(r, e.id) && !(e.promo && r.unsub);
+  });
+  if (!people.length) return false;
+  var res = sendToPeople(b, e, people, budget);
+  notifyAdmin("Email " + e.id + " sent after Purchased was unticked",
+    "Email " + e.id + " (\"" + e.subject + "\") was skipped for these people because Purchased was ticked, and the tick " +
+    "has since been removed, so it has now been sent:\n" + res.sent.map(function (r) { return "  ✓ " + r.name + " <" + r.email + ">"; }).join("\n") +
+    (res.failed.length ? "\nNot sent:\n" + res.failed.map(function (f) { return "  ✗ " + f.r.name + ": " + f.why; }).join("\n") : ""));
+  return res.stoppedEarly;
 }
 
 /** Sends one email from the support@ address (same route as the confirmation email). */
@@ -541,6 +566,15 @@ function prepareTrackingColumns(sh) {
   var rows = sh.getMaxRows() - 1, tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
   sh.getRange(2, cBought, rows, 1).setDataValidation(tick);
   sh.getRange(2, cAtt, rows, 1).setDataValidation(tick);
+  // a ticked Purchased box turns the whole row light green
+  var green = "=$" + colLetter(cBought) + "2=TRUE";
+  var rules = sh.getConditionalFormatRules().filter(function (r) {
+    var c = r.getBooleanCondition();
+    return !(c && /^=\$[A-Z]+2=TRUE$/.test(String(c.getCriteriaValues()[0])));          // replace our old rule
+  });
+  rules.push(SpreadsheetApp.newConditionalFormatRule().whenFormulaSatisfied(green).setBackground("#C8E6C9")
+    .setRanges([sh.getRange(2, 1, rows, Math.max(sh.getLastColumn(), head.length))]).build());
+  sh.setConditionalFormatRules(rules);
   var last = sh.getLastRow();
   if (last < 2) return;
   var first = sh.getRange(2, 1, last - 1, 1).getValues(), notes = sh.getRange(2, cNote, last - 1, 1).getFormulas();
@@ -548,15 +582,18 @@ function prepareTrackingColumns(sh) {
     var m = String(v[0]).match(/^Leads for (.+?\)):/);         // "Leads for 4th & 5th Nov 2026 (Wed–Thu): 22 …"
     if (!m) return;
     var row = i + 2;
-    sh.getRange(row, cBought).clearDataValidations();          // no tick boxes in the yellow row
-    sh.getRange(row, cAtt).clearDataValidations();
+    sh.getRange(row, cBought).clearDataValidations().clearContent();   // no tick boxes in the yellow row
+    sh.getRange(row, cAtt).clearDataValidations().clearContent();
+    var cPaid = col("Paid/Free?");                             // so the leads text isn't cut off
+    if (cPaid && String(sh.getRange(row, cPaid).getValue()) === "FREE") sh.getRange(row, cPaid).clearContent();
     if (!notes[i][0]) sh.getRange(row, cNote).setFormula(trackingFormula(m[1], cDates, cCountry, cBought, cAtt));
   });
 }
 
 /** The Comments-cell formula of a yellow row (counts ticked rows whose Bootcamp dates match). */
+function colLetter(c) { var s = ""; for (; c > 0; c = Math.floor((c - 1) / 26)) s = String.fromCharCode(65 + (c - 1) % 26) + s; return s; }
 function trackingFormula(dates, cDates, cCountry, cBought, cAtt) {
-  var L = function (c) { var s = ""; for (; c > 0; c = Math.floor((c - 1) / 26)) s = String.fromCharCode(65 + (c - 1) % 26) + s; return s; };
+  var L = colLetter;
   var rng = function (c) { return "$" + L(c) + "$2:$" + L(c); };
   var country = cCountry ? rng(cCountry) : rng(cDates);
   var d = '"' + String(dates).replace(/"/g, '""') + '"';

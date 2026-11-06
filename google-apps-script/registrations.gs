@@ -80,8 +80,8 @@ var SETTINGS = {
 // Column order for the tabs. Each value is written under the column with the same heading,
 // so you can also drag columns around in the sheet yourself (keep the headings unchanged).
 var COLUMNS = ["Bootcamp dates", "Bootcamp time", "Paid/Free?", "Timestamp", "First name", "Email", "Phone",
-               "Country", "Challenges", "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID",
-               "Purchased", "Attended", "Comments"];   // Purchased / Attended: tick boxes you fill in
+               "Country", "Challenges", "Purchased", "Attended", "Comments",   // Purchased / Attended: tick boxes you fill in
+               "Page", "Status", "Emails sent", "Unsubscribed", "Payment ID"];
 
 /** Receives each registration from the website form. */
 function doPost(e) {
@@ -534,8 +534,10 @@ function fillBlank(sh, heading, value) {
   var col = headings(sh).indexOf(heading) + 1;
   var last = sh.getLastRow();
   if (col < 1 || last < 2) return;
-  var range = sh.getRange(2, col, last - 1, 1);
-  range.setValues(range.getValues().map(function (r) { return [r[0] === "" ? value : r[0]]; }));
+  var range = sh.getRange(2, col, last - 1, 1), first = sh.getRange(2, 1, last - 1, 1).getValues();
+  range.setValues(range.getValues().map(function (r, i) {
+    return [r[0] === "" && !/^Leads for /.test(String(first[i][0])) ? value : r[0]];   // not in the yellow rows
+  }));
 }
 // Moves columns (with their data) so the headings follow the COLUMNS order.
 function orderColumns(sh) {
