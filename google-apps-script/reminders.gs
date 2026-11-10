@@ -33,7 +33,18 @@ var REMINDER_SETTINGS = {
   NEXT_BATCH_HOURS_BEFORE: 8,
   // Meta ad spend per bootcamp: a campaign counts toward a batch if its name contains one of these words
   // (not case-sensitive). Spend that matches neither is listed in the weekly "Next … batch added" email.
-  AD_CAMPAIGNS: { morning: ["NZ", "Australia"], evening: ["UAE", "Saudi", "India"] },
+  AD_CAMPAIGNS: { morning: ["NZ", "Australia", "Singapore", "Hong Kong"], evening: ["UAE", "Saudi", "India"] },
+  // The "Time (shown in emails)" of a batch's upcoming rows, worked out for each Day 1 like on its landing page
+  // (daylight saving included). Same list and order as the page's BOOTCAMP block. A batch not listed keeps the
+  // time text you typed. abbr: [standard, daylight saving]; no abbr = none shown.
+  BATCH_ZONES: {
+    morning: [
+      { tz: "Pacific/Auckland", label: "New Zealand", abbr: ["NZST", "NZDT"] },
+      { tz: "Australia/Sydney", label: "Australia", abbr: ["AEST", "AEDT"] },
+      { tz: "Asia/Singapore", label: "Singapore & Hong Kong" },
+      { tz: "Asia/Kolkata", label: "India", abbr: ["IST"] }
+    ]
+  },
   SEND_WHATSAPP_REMINDERS: true,  // WhatsApp reminders W1–W4 (emails.gs); needs the 4 approved templates
   KEEP_OLD_BATCH_DAYS: 7        // a batch's row is removed this many days after its Day 2 (all its emails are done)
 };
@@ -553,13 +564,14 @@ function addNextBatchRows() {
     var day1 = new Date(b.day1.getTime() + shift);
     var day2 = new Date((b.day2 ? b.day2.getTime() : b.day1.getTime() + 864e5) + shift);
     var dates = bootcampDates(day1, day2);
+    var time = batchTimeText(b.key, day1) || b.time;
     var leads = writeLeadSummary(b);                              // the closing batch's lead count, before the switch
-    sh.appendRow([b.key, b.tab, dates, b.time, day1, day2, b.join_link, "", ""]);
+    sh.appendRow([b.key, b.tab, dates, time, day1, day2, b.join_link, "", ""]);
     sh.getRange(sh.getLastRow(), 5, 1, 2).setNumberFormat("dd mmm yyyy, hh:mm");
     latest[k] = { key: b.key, day1: day1 };
     notifyAdmin("Next " + b.key + " batch added: " + dates,
       (leads ? leads + "\n\n" : "") +
-      "The " + b.key + " landing page now shows " + dates + " (" + b.time + "), and the Settings tab has a new row for it.\n\n" +
+      "The " + b.key + " landing page now shows " + dates + " (" + time + "), and the Settings tab has a new row for it.\n\n" +
       "The join link was copied from the previous batch (" + (b.join_link || "none") + "). If this batch has a different link, " +
       "change it in the new row before " + fmt(new Date(day1.getTime() - 24 * 3600e3)) + ", when the first reminder with the link goes out.\n" +
       "Add the replay links to the new row after each session, as usual.\n\n" +
@@ -575,6 +587,8 @@ function addNextBatchRows() {
   var vals = sh.getRange(2, 1, last - 1, SETTINGS_HEADINGS.length).getValues();
   for (var i = vals.length - 1; i >= 0; i--) {
     var key = String(vals[i][0]).trim(), d1 = toDate(vals[i][4]), d2 = toDate(vals[i][5]);
+    var t = d1 && d1.getTime() > now ? batchTimeText(key, d1) : "";     // upcoming batches: keep the time text current
+    if (t && t !== String(vals[i][3]).trim()) sh.getRange(i + 2, 4).setValue(t);
     if (!key || !d1 || !d2 || !latest[key] || d1.getTime() === latest[key].day1.getTime()) continue;
     if (now - d2.getTime() > REMINDER_SETTINGS.KEEP_OLD_BATCH_DAYS * 864e5) {
       sh.deleteRow(i + 2);
@@ -944,7 +958,7 @@ function money(n, currency) {
 var SHORT_COUNTRY = { "United Arab Emirates": "UAE", "United States": "USA", "United Kingdom": "UK" };
 // Paid buyers' rows have no country: use the phone number's dialling code (longest match first)
 var DIAL_CODES = { "971": "UAE", "966": "Saudi Arabia", "974": "Qatar", "968": "Oman", "973": "Bahrain", "965": "Kuwait",
-  "977": "Nepal", "880": "Bangladesh", "353": "Ireland", "254": "Kenya", "234": "Nigeria", "94": "Sri Lanka",
+  "977": "Nepal", "852": "Hong Kong", "880": "Bangladesh", "353": "Ireland", "254": "Kenya", "234": "Nigeria", "94": "Sri Lanka",
   "92": "Pakistan", "91": "India", "65": "Singapore", "64": "New Zealand", "61": "Australia", "60": "Malaysia",
   "49": "Germany", "44": "UK", "33": "France", "31": "Netherlands", "27": "South Africa", "1": "USA/Canada" };
 function countryFromPhone(phone) {
@@ -953,6 +967,23 @@ function countryFromPhone(phone) {
   d = d.replace("+", "");
   for (var n = 3; n >= 1; n--) if (DIAL_CODES[d.slice(0, n)]) return DIAL_CODES[d.slice(0, n)];
   return "Other";
+}
+
+/** "6:30 PM NZDT (New Zealand) / 4:30 PM AEDT (Australia) / …" for a batch listed in BATCH_ZONES ("" if not listed). */
+function batchTimeText(key, day1) {
+  var zones = (REMINDER_SETTINGS.BATCH_ZONES || {})[key];
+  if (!zones || !day1) return "";
+  return zones.map(function (z) {
+    var off = function (d) {
+      var s = Utilities.formatDate(d, z.tz, "Z");                      // e.g. "+1300"
+      return (s.charAt(0) === "-" ? -1 : 1) * (+s.slice(1, 3) * 60 + +s.slice(3, 5));
+    };
+    var y = +Utilities.formatDate(day1, "UTC", "yyyy");
+    var std = Math.min(off(new Date(Date.UTC(y, 0, 1))), off(new Date(Date.UTC(y, 6, 1))));
+    var abbr = z.abbr ? z.abbr[off(day1) > std && z.abbr[1] ? 1 : 0] : "";
+    var time = Utilities.formatDate(day1, z.tz, "h:mm a").replace(":00 ", " ");
+    return time + (abbr ? " " + abbr : "") + " (" + z.label + ")";
+  }).join(" / ");
 }
 
 /** Dates written the same way as on the landing pages, e.g. "9th & 10th Nov 2026 (Mon–Tue)". */

@@ -21,8 +21,8 @@
   day1: the Day 1 start of the current batch, in India time (IST),
   written as "YYYY-MM-DD HH:MM". Change it only to move the
   schedule, e.g. to skip a week.
-  For more than one time, add another "..." inside the [ ] brackets,
-  separated by a comma.
+  zones: the countries whose local start times are shown (in this
+  order). Each time is worked out from day1, including daylight saving.
   batch: which tab of the Google Sheet the registrations go to:
   "morning" (Mon–Tue bootcamp) or "evening" (Wed–Thu bootcamp).
   ================================================================
@@ -30,7 +30,14 @@
 <script>
   window.BOOTCAMP = {
     day1:  "2026-11-09 11:00",   // Day 1 start, India time (see above)
-    times: ["4:30 PM AEDT (Australia)", "6:30 PM NZDT (New Zealand)", "11 AM IST (India)", "9:30 AM GST (UAE)"],
+    // Times are worked out for each batch's Day 1, so daylight saving (Australia, New Zealand) changes by itself.
+    // abbr: [standard, daylight saving]; leave abbr out to show no abbreviation.
+    zones: [
+      { tz: "Pacific/Auckland", label: "New Zealand", abbr: ["NZST", "NZDT"] },
+      { tz: "Australia/Sydney", label: "Australia", abbr: ["AEST", "AEDT"] },
+      { tz: "Asia/Singapore", label: "Singapore & Hong Kong" },
+      { tz: "Asia/Kolkata", label: "India", abbr: ["IST"] }
+    ],
     mode:  "Online (English)",
     batch: "morning"
   };
@@ -143,7 +150,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <svg class="event-icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="25" r="16"/><path class="hand" d="M24 16v9l6 4"/><path d="M19 5h10"/></svg>
           <div>
             <span class="event-k">Time</span>
-            <span class="event-v" data-bootcamp="times">4:30 PM AEDT (Australia)<br />6:30 PM NZDT (New Zealand)<br />11 AM IST (India)<br />9:30 AM GST (UAE)</span>
+            <span class="event-v" data-bootcamp="times">6:30 PM NZDT (New Zealand)<br />4:30 PM AEDT (Australia)<br />1:30 PM (Singapore &amp; Hong Kong)<br />11 AM IST (India)</span>
           </div>
         </div>
         <div class="event-item">
@@ -689,7 +696,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <svg class="sticky-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="10" width="34" height="31" rx="5"/><path d="M7 19h34M16 6v8M32 6v8"/><circle cx="16" cy="26" r="2.2"/><circle cx="24" cy="26" r="2.2"/><circle cx="32" cy="26" r="2.2"/><circle cx="16" cy="33" r="2.2"/><circle cx="24" cy="33" r="2.2"/><circle cx="32" cy="33" r="2.2"/></svg>
       <div class="sticky-text">
         <strong>2-Day Online Workshop <span class="nowrap">(2 hours each day)</span></strong>
-        <span data-bootcamp="times" data-join=" / ">4:30 PM AEDT (Australia) / 6:30 PM NZDT (New Zealand) / 11 AM IST (India) / 9:30 AM GST (UAE)</span>
+        <span data-bootcamp="times" data-join=" / ">6:30 PM NZDT (New Zealand) / 4:30 PM AEDT (Australia) / 1:30 PM (Singapore &amp; Hong Kong) / 11 AM IST (India)</span>
         <span data-bootcamp="dates">9th &amp; 10th Nov 2026 (Mon–Tue)</span>
       </div>
     </div>

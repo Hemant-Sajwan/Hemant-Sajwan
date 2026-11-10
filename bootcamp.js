@@ -23,6 +23,24 @@ function bootcampDates() {
     " " + MON[d1.getUTCMonth()] + (sameYear ? "" : " " + d1.getUTCFullYear()));
   info.dates = first + " & " + day(d2) + " " + MON[d2.getUTCMonth()] + " " + d2.getUTCFullYear() +
     " (" + WD[d1.getUTCDay()] + "–" + WD[d2.getUTCDay()] + ")";        // e.g. 9th & 10th Nov 2026 (Mon–Tue)
+  if (info.zones) info.times = info.zones.map(function (z) { return zoneTime(day1, z); });
+}
+
+// "6:30 PM NZDT (New Zealand)": the Day 1 start in a time zone, with daylight saving worked out for that date.
+// z = { tz: "Pacific/Auckland", label: "New Zealand", abbr: ["NZST", "NZDT"] } (standard, daylight); no abbr = none shown.
+function zoneTime(ms, z) {
+  var offset = function (t) {                                      // minutes ahead of UTC in that zone at time t
+    var p = {};
+    new Intl.DateTimeFormat("en-US", { timeZone: z.tz, hourCycle: "h23", year: "numeric", month: "numeric",
+      day: "numeric", hour: "numeric", minute: "numeric" }).formatToParts(new Date(t)).forEach(function (x) { p[x.type] = +x.value; });
+    return Math.round((Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - t) / 60000);
+  };
+  var off = offset(ms), y = new Date(ms).getUTCFullYear();
+  var std = Math.min(offset(Date.UTC(y, 0, 1)), offset(Date.UTC(y, 6, 1)));
+  var local = new Date(ms + off * 60000), h = local.getUTCHours(), m = local.getUTCMinutes();
+  var time = ((h % 12) || 12) + (m ? ":" + (m < 10 ? "0" : "") + m : "") + (h < 12 ? " AM" : " PM");
+  var abbr = z.abbr ? z.abbr[off > std && z.abbr[1] ? 1 : 0] : "";
+  return time + (abbr ? " " + abbr : "") + " (" + z.label + ")";
 }
 bootcampDates();
 
