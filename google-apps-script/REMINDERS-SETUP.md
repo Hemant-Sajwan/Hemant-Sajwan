@@ -104,7 +104,7 @@ Each yellow row also shows **Ad spend** and **Cost per lead** for that batch, on
 (see below). A batch's spend = its campaigns over the 7 days before its Day 1 (after each switch, the ads
 already bring people to the next dates). It shows "(so far)" until a day after Day 1, then it's final.
 Campaigns are matched by words in their names, set in `AD_CAMPAIGNS` at the top of `reminders.gs`:
-morning = "NZ", "Australia"; evening = "UAE", "Saudi", "India". Spend from campaigns that match neither is
+morning = "NZ", "Australia", "Singapore", "Hong Kong", "Hongkong"; evening = "UAE", "Saudi", "India". Spend from campaigns that match neither is
 listed in the weekly "Next … batch added" email.
 
 ## Monthly report (1st of each month, 9 AM IST)
