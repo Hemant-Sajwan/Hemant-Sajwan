@@ -21,8 +21,8 @@
   day1: the Day 1 start of the current batch, in India time (IST),
   written as "YYYY-MM-DD HH:MM". Change it only to move the
   schedule, e.g. to skip a week.
-  For more than one time, add another "..." inside the [ ] brackets,
-  separated by a comma.
+  zones: the countries whose local start times are shown (in this
+  order). Each time is worked out from day1, including daylight saving.
   batch: which tab of the Google Sheet the registrations go to:
   "morning" (Mon–Tue bootcamp) or "evening" (Wed–Thu bootcamp).
   ================================================================
@@ -30,7 +30,13 @@
 <script>
   window.BOOTCAMP = {
     day1:  "2026-11-04 19:30",   // Day 1 start, India time (see above)
-    times: ["7:30 PM IST (India)", "6 PM GST (UAE)"],
+    // Times are worked out for each batch's Day 1 (none of these countries uses daylight saving).
+    // abbr: [standard, daylight saving]; leave abbr out to show no abbreviation.
+    zones: [
+      { tz: "Asia/Kolkata", label: "India", abbr: ["IST"] },
+      { tz: "Asia/Dubai", label: "UAE" },
+      { tz: "Asia/Riyadh", label: "Saudi Arabia" }
+    ],
     mode:  "Online (English)",
     batch: "evening"
   };
@@ -143,7 +149,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           <svg class="event-icon" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="25" r="16"/><path class="hand" d="M24 16v9l6 4"/><path d="M19 5h10"/></svg>
           <div>
             <span class="event-k">Time</span>
-            <span class="event-v" data-bootcamp="times">7:30 PM IST (India)<br />6 PM GST (UAE)</span>
+            <span class="event-v" data-bootcamp="times">7:30 PM IST (India)<br />6 PM (UAE)<br />5 PM (Saudi Arabia)</span>
           </div>
         </div>
         <div class="event-item">
@@ -689,7 +695,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
       <svg class="sticky-icon" viewBox="0 0 48 48" aria-hidden="true"><rect x="7" y="10" width="34" height="31" rx="5"/><path d="M7 19h34M16 6v8M32 6v8"/><circle cx="16" cy="26" r="2.2"/><circle cx="24" cy="26" r="2.2"/><circle cx="32" cy="26" r="2.2"/><circle cx="16" cy="33" r="2.2"/><circle cx="24" cy="33" r="2.2"/><circle cx="32" cy="33" r="2.2"/></svg>
       <div class="sticky-text">
         <strong>2-Day Online Workshop <span class="nowrap">(2 hours each day)</span></strong>
-        <span data-bootcamp="times" data-join=" / ">7:30 PM IST (India) / 6 PM GST (UAE)</span>
+        <span data-bootcamp="times" data-join=" / ">7:30 PM IST (India) / 6 PM (UAE) / 5 PM (Saudi Arabia)</span>
         <span data-bootcamp="dates">4th &amp; 5th Nov 2026 (Wed–Thu)</span>
       </div>
     </div>

@@ -50,7 +50,8 @@ The project now has **three** script files:
 For the **morning** batch, the new row's **Time (shown in emails)** is worked out from its Day 1 for each country in
 `BATCH_ZONES` (top of `reminders.gs`), daylight saving included, the same way as on the `/fvm/` page:
 e.g. `6:30 PM NZDT (New Zealand) / 4:30 PM AEDT (Australia) / 1:30 PM (Singapore & Hong Kong) / 11 AM IST (India)`,
-which becomes NZST / AEST in April. Upcoming morning rows are kept up to date. The evening batch keeps the time you typed.
+which becomes NZST / AEST in April. The **evening** batch works the same way: `7:30 PM IST (India) / 6 PM (UAE) / 5 PM (Saudi Arabia)`.
+Upcoming rows are kept up to date.
 
 The current batch keeps its own row until its emails are done (a week after Day 2, then the row is removed),
 so its people still get the replay, feedback and follow-up emails.
@@ -104,7 +105,7 @@ Each yellow row also shows **Ad spend** and **Cost per lead** for that batch, on
 (see below). A batch's spend = its campaigns over the 7 days before its Day 1 (after each switch, the ads
 already bring people to the next dates). It shows "(so far)" until a day after Day 1, then it's final.
 Campaigns are matched by words in their names, set in `AD_CAMPAIGNS` at the top of `reminders.gs`:
-morning = "NZ", "Australia", "Singapore", "Hong Kong", "Hongkong"; evening = "UAE", "Saudi", "India". Spend from campaigns that match neither is
+morning = "NZ", "Australia", "Singapore", "Hong Kong", "Hongkong"; evening = "UAE", "Saudi", "India", "QBOK". Spend from campaigns that match neither is
 listed in the weekly "Next … batch added" email.
 
 ## Monthly report (1st of each month, 9 AM IST)
