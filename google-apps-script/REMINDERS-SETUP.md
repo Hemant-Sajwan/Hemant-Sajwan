@@ -47,6 +47,11 @@ The project now has **three** script files:
   per country (see below). The same text is in the email.
   Each email address counts once; unfinished payments aren't counted; paid buyers' country comes from their phone code.
 
+For the **morning** batch, the new row's **Time (shown in emails)** is worked out from its Day 1 for each country in
+`BATCH_ZONES` (top of `reminders.gs`), daylight saving included, the same way as on the `/fvm/` page:
+e.g. `6:30 PM NZDT (New Zealand) / 4:30 PM AEDT (Australia) / 1:30 PM (Singapore & Hong Kong) / 11 AM IST (India)`,
+which becomes NZST / AEST in April. Upcoming morning rows are kept up to date. The evening batch keeps the time you typed.
+
 The current batch keeps its own row until its emails are done (a week after Day 2, then the row is removed),
 so its people still get the replay, feedback and follow-up emails.
 
