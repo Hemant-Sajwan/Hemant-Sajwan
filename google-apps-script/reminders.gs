@@ -33,7 +33,7 @@ var REMINDER_SETTINGS = {
   NEXT_BATCH_HOURS_BEFORE: 8,
   // Meta ad spend per bootcamp: a campaign counts toward a batch if its name contains one of these words
   // (not case-sensitive). Spend that matches neither is listed in the weekly "Next … batch added" email.
-  AD_CAMPAIGNS: { morning: ["NZ", "Australia", "Singapore", "Hong Kong", "Hongkong"], evening: ["UAE", "Saudi", "India"] },
+  AD_CAMPAIGNS: { morning: ["NZ", "Australia", "Singapore", "Hong Kong", "Hongkong"], evening: ["UAE", "Saudi", "India", "QBOK"] },
   // The "Time (shown in emails)" of a batch's upcoming rows, worked out for each Day 1 like on its landing page
   // (daylight saving included). Same list and order as the page's BOOTCAMP block. A batch not listed keeps the
   // time text you typed. abbr: [standard, daylight saving]; no abbr = none shown.
@@ -43,6 +43,11 @@ var REMINDER_SETTINGS = {
       { tz: "Australia/Sydney", label: "Australia", abbr: ["AEST", "AEDT"] },
       { tz: "Asia/Singapore", label: "Singapore & Hong Kong" },
       { tz: "Asia/Kolkata", label: "India", abbr: ["IST"] }
+    ],
+    evening: [
+      { tz: "Asia/Kolkata", label: "India", abbr: ["IST"] },
+      { tz: "Asia/Dubai", label: "UAE" },
+      { tz: "Asia/Riyadh", label: "Saudi Arabia" }
     ]
   },
   SEND_WHATSAPP_REMINDERS: true,  // WhatsApp reminders W1–W4 (emails.gs); needs the 4 approved templates
