@@ -44,8 +44,8 @@ var SETTINGS = {
   // Leave "" and the email says the joining details will follow.
   ZOOM_LINK: "",
 
-  // WhatsApp community link shown in the email
-  WHATSAPP_LINK: "https://wa.cisspaccelerator.com/",
+  // WhatsApp community link shown in the email (same as on the thank-you page)
+  WHATSAPP_LINK: "https://chat.whatsapp.com/JMlNHqjLhQwAamcQGyh7eD",
 
   // Your regular WhatsApp number for queries, country code + digits only, e.g. "919876543210".
   // Shown in the email as a tap-to-chat link. Leave "" to show only the support email.
