@@ -113,7 +113,7 @@ function doPost(e) {
     batch: clean(p.batch, 20).toLowerCase()
   };
   entry.firstName = firstNameOf(entry.fullName);   // greetings use the first name only
-  if (!entry.firstName || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(entry.email) || !entry.phone) {
+  if (!entry.firstName || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(entry.email) || /^\.|\.\.|\.@|@\./.test(entry.email) || !entry.phone) {
     return reply({ ok: false, error: "missing or invalid fields" });
   }
 

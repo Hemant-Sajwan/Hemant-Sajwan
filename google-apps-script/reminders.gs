@@ -172,7 +172,7 @@ function runEmailSchedule() {
       EMAILS.filter(function (e) { return e.anchor === "registration"; }).forEach(function (e) {
         var due = [], skip = [];
         batchRows(b).forEach(function (r) {
-          if (!r.ts || r.ts.getTime() < start || hasSent(r, e.id) || hasSent(r, e.id + "-")) return;
+          if (!r.ts || r.ts.getTime() < start || hasSent(r, e.id) || hasSent(r, e.id + "-") || hasSent(r, e.id + "✗")) return;
           var t = r.ts.getTime() + e.minutes * 60e3;
           if (t >= b.day1.getTime()) { skip.push(r); return; }                // would land after Day 1 starts
           if (t <= now.getTime() + 30 * 1000 && !(e.promo && r.unsub)) due.push(r);
@@ -221,7 +221,7 @@ function scheduleNextEmail(soon) {
       if (e.anchor === "registration") {
         if (b.day1.getTime() <= now) return;
         batchRows(b).forEach(function (r) {
-          if (!r.ts || r.ts.getTime() < start || hasSent(r, e.id) || hasSent(r, e.id + "-") || (e.promo && r.unsub)) return;
+          if (!r.ts || r.ts.getTime() < start || hasSent(r, e.id) || hasSent(r, e.id + "-") || hasSent(r, e.id + "✗") || (e.promo && r.unsub)) return;
           var t2 = r.ts.getTime() + e.minutes * 60e3;
           if (t2 < b.day1.getTime()) next = Math.min(next, t2);
         });

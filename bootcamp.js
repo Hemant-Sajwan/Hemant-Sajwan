@@ -141,7 +141,8 @@ bootcampDates();
   // field checks: first name, email and phone are required
   var rules = {
     first_name: function (v) { return v.trim().length > 0; },
-    email: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()); },
+    // also no dot at the start, right before/after the @, or twice in a row (Gmail can't send to those)
+    email: function (v) { v = v.trim(); return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v) && !/^\.|\.\.|\.@|@\./.test(v); },
     phone_number: function () { return phoneDigits() !== null; }
   };
   function check(input) {
