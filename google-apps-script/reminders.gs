@@ -620,11 +620,36 @@ function writeLeadSummary(b) {
   var row = writeRow(sh, [text]);
   sh.getRange(row, 1, 1, Math.max(headings(sh).length, 1)).setFontWeight("bold").setBackground("#FFF2B3");
   sh.getRange(row, 1).setWrapStrategy(SpreadsheetApp.WrapStrategy.OVERFLOW);   // one item per line
+  try { moveLaterRowsBelow(sh, row, b); } catch (err) { console.error(err); }   // people moved to a later batch
   prepareTrackingColumns(sh);
   var ad = savedAdSpend(b.dates);
   if (ad && ad.other) text += "\n\nAd spend not matched to a bootcamp (" + ad.since + " to " + ad.until + "): " +
     money(ad.other, ad.currency) + " – " + ad.otherNames.join(", ") + ". To count it, add a word from its name to AD_CAMPAIGNS in reminders.gs.";
   return text;
+}
+
+/**
+ * Someone moved to a batch nobody had registered for yet sits among the closing batch's rows. When that batch's
+ * yellow row is added, move such rows (from a later batch, between the previous yellow row and this one) to just
+ * below it, in the same order, so they start their own batch's section. Returns the yellow row's new number.
+ */
+function moveLaterRowsBelow(sh, yellow, b) {
+  var earlier = {};                                                  // this batch and earlier ones stay put
+  readBatches().forEach(function (x) { if (x.day1 <= b.day1) earlier[normDates(x.dates)] = true; });
+  earlier[normDates(b.dates)] = true;
+  var head = headings(sh), cDates = head.indexOf("Bootcamp dates"), cEmail = head.indexOf("Email");
+  if (cDates < 0 || yellow < 3) return yellow;
+  var vals = sh.getRange(2, 1, yellow - 2, head.length).getValues(), start = 0, rows = [];
+  vals.forEach(function (v, i) { if (/^Leads for /.test(String(v[0]))) start = i + 1; });   // after the previous yellow row
+  for (var i = start; i < vals.length; i++) {
+    var d = normDates(vals[i][cDates]);
+    if (d && !earlier[d] && (cEmail < 0 || String(vals[i][cEmail]).trim())) rows.push(i + 2);
+  }
+  for (var j = rows.length - 1; j >= 0; j--) {                      // bottom one first keeps their order
+    sh.moveRows(sh.getRange(rows[j] + ":" + rows[j]), yellow + 1);
+    yellow--;
+  }
+  return yellow;
 }
 
 /**
