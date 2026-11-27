@@ -766,8 +766,11 @@ function moveToAnotherBatch() {
       "From: " + (from || "(no dates)") + "\nTo: " + pick.dates + "\n\nThey'll get a new confirmation email and WhatsApp with the new dates.",
       ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
 
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
+  var lock = LockService.getUserLock();          // row writes only: the email run doesn't block this
+  if (!lock.tryLock(120000)) {
+    ui.alert("The sheet is busy with another update. Please try again in a minute. Nothing was changed.");
+    return;
+  }
   var dest, destRow;
   try {
     var record = {};

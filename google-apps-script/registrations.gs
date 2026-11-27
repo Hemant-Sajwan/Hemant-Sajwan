@@ -133,10 +133,10 @@ function doPost(e) {
   }
 
   var ts = new Date();
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);   // one write at a time, so rows never overlap
+  addNextBatchesIfFree();   // a registration right after the switch: next week's row should be there
+  var lock = LockService.getUserLock();
+  lock.waitLock(120000);    // one row write at a time (held for a moment; the email run doesn't block it)
   try {
-    addNextBatches();     // a registration right after the switch: next week's row must be there
     appendByHeading(getTab(tabFor(entry.batch)), {
       "Bootcamp dates": entry.dates, "Bootcamp time": entry.times, "Paid/Free?": "FREE", "Timestamp": ts,
       "First name": entry.fullName, "Email": entry.email, "Phone": entry.phone,
@@ -176,9 +176,7 @@ function handlePaid(p) {
   if (!secret || p.secret !== secret) return { ok: false, error: "not allowed" };
 
   var fullName = clean(p.name, 80);
-  var lock = LockService.getScriptLock();
-  lock.waitLock(20000);
-  try { addNextBatches(); } finally { lock.releaseLock(); }      // a payment right after the switch gets next week's dates
+  addNextBatchesIfFree();   // a payment right after the switch gets next week's dates
   var b = latestBatch(SETTINGS.PAID_BATCH_KEY);
   if (!b) notifyAdmin("Paid registration: no Settings row for the " + SETTINGS.PAID_BATCH_KEY + " batch",
     "A payment came in from " + fullName + " <" + p.email + "> but the Settings tab has no " + SETTINGS.PAID_BATCH_KEY +
@@ -198,7 +196,8 @@ function handlePaid(p) {
 
   var sh = getTab(batch.tab);
   var ts = new Date();
-  lock.waitLock(20000);
+  var lock = LockService.getUserLock();
+  lock.waitLock(120000);
   try {
     // the same payment can be passed on twice (retries); only the first one counts
     if (entry.paymentId && hasValue(sh, "Payment ID", entry.paymentId)) return { ok: true, duplicate: true };
@@ -521,6 +520,12 @@ function headings(sh) {
  * count as data, so rows you add at the bottom (Sheets copies the tick boxes into them) are filled in order.
  */
 function writeRow(sh, values) {
+  // the user lock (everything runs as the sheet owner), not the script lock the email run holds while sending
+  var lock = LockService.getUserLock(), mine = !lock.hasLock();
+  if (mine) lock.waitLock(120000);                                  // two writers never pick the same row
+  try { return writeRowNow(sh, values); } finally { if (mine) lock.releaseLock(); }
+}
+function writeRowNow(sh, values) {
   var last = sh.getLastRow(), row = 2;
   if (last >= 2) {
     var vals = sh.getRange(1, 1, last, Math.max(sh.getLastColumn(), values.length)).getValues();
@@ -604,6 +609,16 @@ function removeEmptyRows(sh) {
     if (start + count - 1 >= sh.getMaxRows() && start === 2) { sh.getRange(2, 1, count, width).clearContent().clearDataValidations(); continue; }
     sh.deleteRows(start, count);
   }
+}
+
+/**
+ * Adds next week's batch row if it's due, but only when the email run isn't busy (it holds the script lock while
+ * sending, sometimes for minutes). If it is busy, that run adds the row itself, so nothing waits on it.
+ */
+function addNextBatchesIfFree() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(5000)) return;
+  try { addNextBatches(); } finally { lock.releaseLock(); }
 }
 
 /** Country for a paid buyer from their phone's dialling code ("" if it can't tell). */
