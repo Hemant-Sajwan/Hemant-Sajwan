@@ -781,18 +781,11 @@ function moveToAnotherBatch() {
     var stamp = Utilities.formatDate(new Date(), REMINDER_SETTINGS.TIME_ZONE, "d MMM yyyy");
     record["Comments"] = (String(record["Comments"] || "").trim() ? record["Comments"] + " · " : "") + "Moved from " + (from || "?") + " on " + stamp;
     dest = ss.getSheetByName(pick.tab) || getTab(pick.tab);
-    if (dest.getName() === sh.getName()) {
-      dest = sh; destRow = row;
-      ["Bootcamp dates", "Bootcamp time", "Emails sent", "Comments"].forEach(function (h) {
-        var c = head.indexOf(h) + 1;
-        if (c) sh.getRange(row, c).setNumberFormat(h === "Emails sent" ? "@" : "General").setValue(record[h]);
-      });
-    } else {                                                          // morning ⇄ evening: the row moves tab
-      destRow = appendByHeading(dest, record);
-      var c = headings(dest).indexOf("Emails sent") + 1;
-      if (c) dest.getRange(destRow, c).setNumberFormat("@").setValue("1, 2");
-      sh.deleteRow(row);
-    }
+    var same = dest.getName() === sh.getName();
+    destRow = placeWithBatch(dest, record, pick.dates, same ? row : 0);   // with that batch's other registrations
+    if (same && row >= destRow) row++;                                 // inserted above it: the original moved down one
+    else if (same) destRow--;                                          // original above it: the new row moves up once it's gone
+    sh.deleteRow(row);
   } finally { lock.releaseLock(); }
 
   var entry = { firstName: firstNameOf(name), email: email.toLowerCase(), phone: String(get("Phone")), dates: pick.dates,
@@ -803,6 +796,32 @@ function moveToAnotherBatch() {
   ui.alert(name + " moved ✓", "Now in: " + pick.dates + " (" + dest.getName() + " tab, row " + destRow + ")\n\n" +
     "Confirmation email: " + (mailed ? "sent" : "NOT sent – check the email address") + "\n" +
     "WhatsApp: " + (!wa ? "not sent (WhatsApp not set up)" : wa.ok ? "sent" : "NOT sent – " + String(wa.detail).slice(0, 120)), ui.ButtonSet.OK);
+}
+
+/**
+ * Inserts a registration row right after the last row of the given batch (dates) in that tab, or after the last
+ * row with data if the batch has no registrations yet. `skipRow` = the person's current row (not counted).
+ * Returns the new row's number.
+ */
+function placeWithBatch(sh, record, dates, skipRow) {
+  addMissingHeadings(sh);
+  var head = headings(sh), cDates = head.indexOf("Bootcamp dates"), last = sh.getLastRow(), after = 0, lastData = 1;
+  var vals = last > 1 ? sh.getRange(2, 1, last - 1, head.length).getValues() : [];
+  vals.forEach(function (v, i) {
+    var r = i + 2;
+    if (r === skipRow) return;
+    if (v.some(function (x) { return x !== "" && x !== false; })) lastData = r;
+    if (normDates(v[cDates]) === normDates(dates)) after = r;
+  });
+  var at = (after || lastData) + 1;
+  sh.insertRowBefore(at);
+  sh.getRange(at, 1, 1, head.length).setValues([head.map(function (h) { return h in record ? safeCell(record[h]) : ""; })])
+    .setFontWeight("normal").setBackground(null);                  // not styled like a yellow row above it
+  var sent = head.indexOf("Emails sent") + 1;
+  if (sent) sh.getRange(at, sent).setNumberFormat("@").setValue(record["Emails sent"]);
+  var tick = SpreadsheetApp.newDataValidation().requireCheckbox().build();
+  TICK_COLUMNS.forEach(function (h) { var c = head.indexOf(h) + 1; if (c) sh.getRange(at, c).setDataValidation(tick); });
+  return at;
 }
 
 /** The next 4 weeks of each batch: rows already in the Settings tab, then the weeks after, worked out the same way. */
