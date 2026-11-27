@@ -729,8 +729,101 @@ function refreshAdSpend() {
 /** Adds a "Bootcamp" menu to the sheet (runs by itself when the sheet is opened). */
 function onOpen() {
   SpreadsheetApp.getUi().createMenu("Bootcamp")
+    .addItem("Move to another batch", "moveToAnotherBatch")
     .addItem("Connect Meta ads (token)", "connectMetaAds")
     .addToUi();
+}
+
+/**
+ * Bootcamp → Move to another batch: click any cell in a person's row (morning or evening tab) first.
+ * Lists the next 4 weeks of both batches; the person's row gets the new dates and time (and moves to the other
+ * tab if needed), "Emails sent" is reset to "1, 2" so they get the new batch's emails, Comments notes the move,
+ * and a new confirmation email and WhatsApp go out with the new dates.
+ */
+function moveToAnotherBatch() {
+  var ui = SpreadsheetApp.getUi(), ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getActiveSheet();
+  var tabs = Object.keys(SETTINGS.TABS).map(function (k) { return SETTINGS.TABS[k]; });
+  var row = ss.getActiveRange() ? ss.getActiveRange().getRow() : 0;
+  if (tabs.indexOf(sh.getName()) === -1 || row < 2) {
+    ui.alert("Click a cell in the person's row in the " + tabs.join(" or ") + " tab first, then choose Bootcamp → Move to another batch.");
+    return;
+  }
+  var head = headings(sh), vals = sh.getRange(row, 1, 1, head.length).getValues()[0];
+  var get = function (h) { var i = head.indexOf(h); return i >= 0 ? vals[i] : ""; };
+  var name = String(get("First name")).trim(), email = String(get("Email")).trim(), from = String(get("Bootcamp dates")).trim();
+  if (!email || /^Leads for /.test(String(vals[0]))) { ui.alert("Row " + row + " isn't a registration. Click a cell in the person's row."); return; }
+
+  var options = upcomingBatches();
+  if (!options.length) { ui.alert("No upcoming batches found in the Settings tab."); return; }
+  var list = options.map(function (o, i) { return (i + 1) + ")  " + (o.key === "morning" ? "Morning" : "Evening") + ": " + o.dates; }).join("\n");
+  var ans = ui.prompt("Move " + name + " to another batch", "Now in: " + (from || "(no dates)") + "\n\n" + list +
+    "\n\nType the number of the new batch:", ui.ButtonSet.OK_CANCEL);
+  if (ans.getSelectedButton() !== ui.Button.OK) return;
+  var pick = options[+ans.getResponseText().trim() - 1];
+  if (!pick) { ui.alert("That's not one of the numbers in the list. Nothing was changed."); return; }
+  if (normDates(pick.dates) === normDates(from)) { ui.alert(name + " is already in that batch. Nothing was changed."); return; }
+  if (ui.alert("Move " + name + " (" + email + ")",
+      "From: " + (from || "(no dates)") + "\nTo: " + pick.dates + "\n\nThey'll get a new confirmation email and WhatsApp with the new dates.",
+      ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+
+  var lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  var dest, destRow;
+  try {
+    var record = {};
+    head.forEach(function (h, i) { if (h) record[h] = vals[i]; });
+    record["Bootcamp dates"] = pick.dates;
+    record["Bootcamp time"] = pick.time;
+    record["Emails sent"] = "1, 2";                                   // new batch's emails; no second email 2
+    var stamp = Utilities.formatDate(new Date(), REMINDER_SETTINGS.TIME_ZONE, "d MMM yyyy");
+    record["Comments"] = (String(record["Comments"] || "").trim() ? record["Comments"] + " · " : "") + "Moved from " + (from || "?") + " on " + stamp;
+    dest = ss.getSheetByName(pick.tab) || getTab(pick.tab);
+    if (dest.getName() === sh.getName()) {
+      dest = sh; destRow = row;
+      ["Bootcamp dates", "Bootcamp time", "Emails sent", "Comments"].forEach(function (h) {
+        var c = head.indexOf(h) + 1;
+        if (c) sh.getRange(row, c).setNumberFormat(h === "Emails sent" ? "@" : "General").setValue(record[h]);
+      });
+    } else {                                                          // morning ⇄ evening: the row moves tab
+      destRow = appendByHeading(dest, record);
+      var c = headings(dest).indexOf("Emails sent") + 1;
+      if (c) dest.getRange(destRow, c).setNumberFormat("@").setValue("1, 2");
+      sh.deleteRow(row);
+    }
+  } finally { lock.releaseLock(); }
+
+  var entry = { firstName: firstNameOf(name), email: email.toLowerCase(), phone: String(get("Phone")), dates: pick.dates,
+                times: pick.time, mode: "Online (English)", moved: true };
+  var mailed = SETTINGS.SEND_EMAIL && sendConfirmation(entry);
+  var wa = SETTINGS.SEND_WHATSAPP ? sendWhatsApp(entry) : null;
+  try { refreshYellowRows(); } catch (err) { console.error(err); }
+  ui.alert(name + " moved ✓", "Now in: " + pick.dates + " (" + dest.getName() + " tab, row " + destRow + ")\n\n" +
+    "Confirmation email: " + (mailed ? "sent" : "NOT sent – check the email address") + "\n" +
+    "WhatsApp: " + (!wa ? "not sent (WhatsApp not set up)" : wa.ok ? "sent" : "NOT sent – " + String(wa.detail).slice(0, 120)), ui.ButtonSet.OK);
+}
+
+/** The next 4 weeks of each batch: rows already in the Settings tab, then the weeks after, worked out the same way. */
+function upcomingBatches() {
+  var now = Date.now(), latest = {}, out = [], seen = {};
+  readBatches().forEach(function (b) {
+    if (!latest[b.key] || b.day1 > latest[b.key].day1) latest[b.key] = b;
+    if (b.day1.getTime() > now && !seen[normDates(b.dates)]) {
+      seen[normDates(b.dates)] = true;
+      out.push({ key: b.key, tab: b.tab, dates: b.dates, time: b.time, day1: b.day1 });
+    }
+  });
+  Object.keys(latest).forEach(function (k) {
+    var b = latest[k], gap = b.day2 ? b.day2.getTime() - b.day1.getTime() : 864e5;
+    for (var w = 1; out.filter(function (o) { return o.key === k; }).length < 4 && w < 10; w++) {
+      var d1 = new Date(b.day1.getTime() + w * 7 * 864e5);
+      if (d1.getTime() <= now) continue;
+      var dates = bootcampDates(d1, new Date(d1.getTime() + gap));
+      if (seen[normDates(dates)]) continue;
+      seen[normDates(dates)] = true;
+      out.push({ key: k, tab: b.tab, dates: dates, time: batchTimeText(k, d1) || b.time, day1: d1 });
+    }
+  });
+  return out.sort(function (a, b) { return a.key === b.key ? a.day1 - b.day1 : (a.key === "morning" ? -1 : 1); });
 }
 
 /**

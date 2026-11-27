@@ -143,3 +143,13 @@ the Settings tab each time a reminder goes out (change them there; the templates
 
 You can change the wording in WhatsApp Manager any time (it's re-approved), but keep the names and the {{ }} numbers.
 Run **testWhatsAppReminders** to send all four to `WHATSAPP_TEST_NUMBER`.
+
+## Moving someone to another batch
+Click any cell in the person's row (morning or evening tab), then **Bootcamp → Move to another batch**. Pick the
+new batch from the list (the next 4 weeks of both batches) and confirm. The script:
+- sets their **Bootcamp dates** and **time** to the new batch (and moves the row to the other tab for morning ⇄ evening),
+- resets **Emails sent** to `1, 2`, so they get the new batch's emails and WhatsApp reminders (and nothing more from the old one),
+- adds "Moved from … on …" to **Comments**,
+- sends a new confirmation email ("Your new bootcamp dates…", opening with "As requested, you've been moved…") and the
+  WhatsApp confirmation with the new dates, and shows whether both went out.
+

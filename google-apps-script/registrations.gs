@@ -39,6 +39,7 @@ var SETTINGS = {
   // or a "Send mail as" alias of it in Gmail settings. Otherwise the email comes from the owner's address.
   FROM_ADDRESS: "support@hemantsajwan.com",
   EMAIL_SUBJECT: "You're registered: 2-Day CISSP Accelerator – Domain 1 Bootcamp",
+  MOVED_SUBJECT: "Your new bootcamp dates: 2-Day CISSP Accelerator – Domain 1 Bootcamp",   // Bootcamp → Move to another batch
 
   // Optional: paste the Zoom link to include it in the email, e.g. "https://zoom.us/j/123..."
   // Leave "" and the email says the joining details will follow.
@@ -275,8 +276,10 @@ function sendConfirmation(entry) {
     var html =
       '<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#0d1b2a;max-width:560px">' +
       p("Hi " + esc(entry.firstName) + ",") +
-      p("Congratulations on signing up, and welcome to the <strong>2-Day CISSP Accelerator - Domain 1 Bootcamp</strong>!") +
-      p("You’ve made a smart move toward crushing your CISSP goals, and I’m here to help you do it with clarity, confidence, and speed.") +
+      (entry.moved
+        ? p("As requested, you’ve been moved to a new batch of the <strong>2-Day CISSP Accelerator - Domain 1 Bootcamp</strong>. Here are your new dates.")
+        : p("Congratulations on signing up, and welcome to the <strong>2-Day CISSP Accelerator - Domain 1 Bootcamp</strong>!") +
+          p("You’ve made a smart move toward crushing your CISSP goals, and I’m here to help you do it with clarity, confidence, and speed.")) +
       p("<strong>🗓️ Bootcamp Schedule:</strong>") +
       '<table style="border-collapse:collapse;margin:0 0 14px;background:#eef2f7;border-left:4px solid #FFD401">' +
       row("Dates:", esc(entry.dates)) + row("Time:", esc(entry.times)) + row("Join Link:", joinHtml) +
@@ -294,8 +297,10 @@ function sendConfirmation(entry) {
       "</div>";
     var plain = [
       "Hi " + entry.firstName + ",",
-      "Congratulations on signing up, and welcome to the 2-Day CISSP Accelerator - Domain 1 Bootcamp!",
-      "You’ve made a smart move toward crushing your CISSP goals, and I’m here to help you do it with clarity, confidence, and speed.",
+      entry.moved
+        ? "As requested, you’ve been moved to a new batch of the 2-Day CISSP Accelerator - Domain 1 Bootcamp. Here are your new dates."
+        : "Congratulations on signing up, and welcome to the 2-Day CISSP Accelerator - Domain 1 Bootcamp!\n\n" +
+          "You’ve made a smart move toward crushing your CISSP goals, and I’m here to help you do it with clarity, confidence, and speed.",
       "🗓️ Bootcamp Schedule:\nDates: " + (entry.dates || "") + "\nTime: " + (entry.times || "") + "\nJoin Link: " + joinText,
       "You’ll get 2 days of focused, high-impact training covering the Domain 1 of CISSP designed to simplify complex concepts and accelerate your exam prep.",
       "📬 What’s next?",
@@ -307,7 +312,7 @@ function sendConfirmation(entry) {
       "This isn’t another generic training. It’s a fast-track to getting CISSP-ready, minus the stress.",
       "Excited to see you in the sessions,\n\nHemant"
     ].join("\n\n");
-    deliver(entry.email, SETTINGS.EMAIL_SUBJECT, plain, html);   // from support@ (see reminders.gs)
+    deliver(entry.email, entry.moved ? SETTINGS.MOVED_SUBJECT : SETTINGS.EMAIL_SUBJECT, plain, html);   // from support@ (see reminders.gs)
     return true;
   } catch (err) {
     console.error("Email failed: " + err);
